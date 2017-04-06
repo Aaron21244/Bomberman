@@ -218,15 +218,13 @@ window.addEventListener("load", function()
             break;				
         }
 
-        //move map accordingly
-        //dont scroll if less than 1/4 of the map
-        if(bomberman.curGrid.x < mapX / 4 )
+        map.xPos = bomberman.xPos/size - canvas.clientWidth / size / 2 + 1;
+        //don't go past the left end of the map
+        if(map.xPos < 0)
             map.xPos = 0;
-        //dont scroll past the right end of the map
-        else if(bomberman.xPos > map.width - canvas.clientWidth)
-            map.xPos = (map.width - canvas.clientWidth) / size;
-        else
-            map.xPos = bomberman.xPos/size - 1;
+        //don't go past the right end of the map
+        else if (map.xPos+canvas.clientWidth/size > mapX)
+            map.xPos = mapX - canvas.clientWidth/size;
             
     };
 
