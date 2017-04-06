@@ -115,7 +115,7 @@ window.addEventListener("load", function()
             return;
         }
         lastFire = curFire;
-
+        console.log(bomberman.curGrid.x + " " + bomberman.curGrid.y);
         switch(e.keyCode)
         {
             //up arrow
@@ -125,10 +125,10 @@ window.addEventListener("load", function()
                     bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.up.length;
                     bomberman.yPos -= size/bomberman.walkFrames.up.length;
                     //if bomberman left the current grid
-                    if(bomberman.curGrid.y * size > bomberman.yPos)
+                    if(bomberman.curGrid.y * size>= bomberman.yPos + size/2)
                     {
                         //if the grid moved to is walkable, set curGrid 
-                        if(grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable && bomberman.xPos % size == 0)
+                        if(grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable)
                             bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y-1];
                         //else undo the move
                         else
@@ -150,10 +150,10 @@ window.addEventListener("load", function()
                     bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.down.length;
                     bomberman.yPos += size/bomberman.walkFrames.down.length;
                     //if bomberman left the current grid
-                    if(bomberman.curGrid.y * size < bomberman.yPos)
+                    if(bomberman.curGrid.y * size + size <= bomberman.yPos + size/2 + size/3)
                     {
                         //if the grid moved to is walkable, set curGrid 
-                        if(grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable && bomberman.xPos % size == 0 )
+                        if(grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable)
                             bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y+1];
                         //else undo the move
                         else
@@ -175,10 +175,10 @@ window.addEventListener("load", function()
                     bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.left.length;
                     bomberman.xPos -= size/bomberman.walkFrames.left.length;
                     //if bomberman left the current grid
-                    if(bomberman.curGrid.x * size > bomberman.xPos)
+                    if(bomberman.curGrid.x * size >= bomberman.xPos + size/2)
                     {
                         //if the grid moved to is walkable, set curGrid 
-                        if(grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable && bomberman.yPos % size == 0)
+                        if(grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable)
                             bomberman.curGrid = grids[bomberman.curGrid.x-1][bomberman.curGrid.y];
                         //else undo the move
                         else
@@ -199,10 +199,10 @@ window.addEventListener("load", function()
                     bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.right.length;
                     bomberman.xPos += size/bomberman.walkFrames.right.length;
                     //if bomberman left the current grid
-                    if(bomberman.curGrid.x * size < bomberman.xPos)
+                    if(bomberman.curGrid.x * size + size <= bomberman.xPos + size/2)
                     {
                         //if the grid moved to is walkable, set curGrid 
-                        if(grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable && bomberman.yPos % size == 0)
+                        if(grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable)
                             bomberman.curGrid = grids[bomberman.curGrid.x+1][bomberman.curGrid.y];
                         //else undo the move
                         else
