@@ -382,25 +382,26 @@ window.addEventListener("load", function()
             break;
         }
 
-
+        //minused bomb and explosions xPos by the camera position (map.xPos*size) to get the actual pos of the object
+        //on the map
         for(i = 0; i < bombs.length; i++)
             if(bombs[i].isActive)
-                ctx.drawImage(bomb, bombs.animationFrames[bombs[i].curFrame]*size, 0, size, size, bombs[i].xPos, bombs[i].yPos, size, size);
+                ctx.drawImage(bomb, bombs.animationFrames[bombs[i].curFrame]*size, 0, size, size, bombs[i].xPos - map.xPos*size, bombs[i].yPos - map.yPos*size, size, size);
         for(i = 0; i < explosion.length; i++)
             if(explosion[i].isActive)
             {
                 ctx.drawImage(explosions, explosion[i].mid.animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
-                    size, size, explosion[i].mid.xPos, explosion[i].mid.yPos, size, size);
+                    size, size, explosion[i].mid.xPos - map.xPos*size , explosion[i].mid.yPos - map.yPos*size, size, size);
                 for(j = 0; j < explosion.range; j++)
                 {
                     ctx.drawImage(explosions, explosion[i].left[j].animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
-                        size, size, explosion[i].left[j].xPos, explosion[i].left[j].yPos, size, size);
+                        size, size, explosion[i].left[j].xPos - map.xPos*size, explosion[i].left[j].yPos - map.yPos*size, size, size);
                     ctx.drawImage(explosions, explosion[i].up[j].animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
-                        size, size, explosion[i].up[j].xPos, explosion[i].up[j].yPos, size, size);
+                        size, size, explosion[i].up[j].xPos - map.xPos*size, explosion[i].up[j].yPos - map.yPos*size, size, size);
                     ctx.drawImage(explosions, explosion[i].right[j].animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
-                        size, size, explosion[i].right[j].xPos, explosion[i].right[j].yPos, size, size);
+                        size, size, explosion[i].right[j].xPos - map.xPos*size, explosion[i].right[j].yPos - map.yPos*size, size, size);
                     ctx.drawImage(explosions, explosion[i].down[j].animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
-                        size, size, explosion[i].down[j].xPos, explosion[i].down[j].yPos, size, size);
+                        size, size, explosion[i].down[j].xPos - map.xPos*size, explosion[i].down[j].yPos - map.yPos*size, size, size);
                 }
             }
 
