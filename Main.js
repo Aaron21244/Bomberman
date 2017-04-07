@@ -41,6 +41,7 @@ window.addEventListener("load", function()
         }
     }
 
+    
     var bomberman = new Image();
     bomberman.src = "Art/Bomberman.png";
     bomberman.xPos = 32;//position on board
@@ -53,6 +54,34 @@ window.addEventListener("load", function()
         right: [{x: 3, y: 0}, {x: 4, y: 0}, {x: 3, y: 0}, { x: 5, y: 0}],
         left: [{x: 3, y: 1}, {x: 4, y: 1}, {x: 3, y: 1}, { x: 5, y: 1}]
     };
+
+    var bombs = [];//array of bombs
+    bombs.numBombs = 1;//number of bombs allowed
+    bombs.activeBombs = 0;
+    bombs.maxBombs = 10;//maximum number of bombs
+    var bomb = new Image();//image for bombs
+    bomb.src = "Art/Bomb.png";//image for bombs
+    bombs.animationFrames = [0,1,0,2];//animation frames
+    for(i = 0; i < bombs.maxBombs; i++)
+    {
+        bombs[i] = {};
+        bombs[i].curFrame = 0;//current frame in animation cycle
+        bombs[i].cFrame = 0;//current frame up to frames length
+        bombs[i].xPos = 0;
+        bombs[i].yPos = 0;
+        bombs[i].isActive = false;
+    }
+    bombs.timer = 3000;//time for bomb to explode
+    bombs.numFrames = 8;//number of frames before bomb explodes
+    var explosion = [];//array of explosions
+    explosion.activeExp = 0;
+    var explosions = new Image();
+    explosions.src = "Art/Explosion.png";
+    explosion.range = 1;//range of explosion
+    explosion.animationFrames = [0,1,2,3,3,2,1,0];//animation frames for explosion
+    explosion.timer = 500;//time to explode
+    
+    
 
     bomberman.onload = function()
     {
@@ -122,9 +151,111 @@ window.addEventListener("load", function()
                     bomberman.curDir = "right";
                     bomberman.curFrame = 0;
                 }
+            break;
+
+            //space
+            case 32:
+                if(bombs.activeBombs < bombs.numBombs)
+                {
+                    console.log(bombs.activeBombs + " " + bombs.numBombs);
+                    var t = -1;
+                    //if a bomb is available
+                    for(i = 0; i < bombs.length; i++)
+                    {
+                        if(!bombs[i].isActive)
+                        {
+                            t = i;
+                            break;
+                        }
+                    }
+                    if(t != -1)
+                    {
+                        bombs.activeBombs++;
+                        bombs[t].curFrame = 0;//current frame in animation cycle
+                        bombs[t].cFrame = 0;//current frame up to frames length
+                        bombs[t].xPos = bomberman.xPos;
+                        bombs[t].yPos = bomberman.yPos;
+                        bombs[t].isActive = true;
+                        setTimeout(function(){ animateBomb(t);}, bombs.timer/ bombs.numFrames);
+                    }
+                }
             break;				
         }			
     };
+
+    
+    //setTimeout(function(){ animateExplosions();}, explosion.timer/ explosion.numFrames);
+
+    //function for setting timers to animate bombs
+    function animateBomb(i)
+    {
+        if(bombs[i].isActive)
+        {
+            if(bombs[i].cFrame < bombs.numFrames)
+            {
+                bombs[i].curFrame = (bombs[i].curFrame+1) % bombs.animationFrames.length;
+                bombs[i].cFrame++;
+                setTimeout(function(){ animateBomb(i);}, bombs.timer/bombs.numFrames);
+            }
+            else
+            {
+                bombs.activeBombs--;
+                bombs[i].isActive = false;
+                //explode
+                //adds an image for each direction
+                explosion[explosion.activeExp] = {};
+                explosion[explosion.activeExp].mid = {xPos: bombs[i].xPos,
+                    yPos: bombs[i].yPos, animPos: 0};
+                explosion[explosion.activeExp].left = [];
+                explosion[explosion.activeExp].up = [];
+                explosion[explosion.activeExp].right = [];
+                explosion[explosion.activeExp].down = [];
+                //if the range is greater than 1, add a new image for each direction
+                if(explosion.range > 1)
+                    for(j = 0; j < explosion.range-1; j++)
+                    {
+                        explosion[explosion.activeExp].left[j] = {xPos: bombs[i].xPos-(size*(j+1)),
+                            yPos: bombs[i].yPos, animPos: 6};
+                        explosion[explosion.activeExp].up[j] = {xPos: bombs[i].xPos,
+                            yPos: bombs[i].yPos-(size*(j+1)), animPos: 5};
+                        explosion[explosion.activeExp].right[j] = {xPos: bombs[i].xPos+(size*(j+1)),
+                            yPos: bombs[i].yPos, animPos: 6};
+                        explosion[explosion.activeExp].down[j] = {xPos: bombs[i].xPos,
+                            yPos: bombs[i].yPos+(size*(j+1)), animPos: 5};
+                    }
+                explosion[explosion.activeExp].left[explosion.range-1] = 
+                    {xPos: bombs[i].xPos-size, yPos: bombs[i].yPos, animPos: 1};
+                explosion[explosion.activeExp].up[explosion.range-1] = 
+                    {xPos: bombs[i].xPos, yPos: bombs[i].yPos-size, animPos: 2};
+                explosion[explosion.activeExp].right[explosion.range-1] = 
+                    {xPos: bombs[i].xPos+size, yPos: bombs[i].yPos, animPos: 3};
+                explosion[explosion.activeExp].down[explosion.range-1] =
+                    {xPos: bombs[i].xPos, yPos: bombs[i].yPos+size, animPos: 4};
+                explosion[explosion.activeExp].curFrame = 0;
+                explosion[explosion.activeExp].isActive = true;
+                var j = explosion.activeExp;
+                explosion.activeExp++;
+                setTimeout(function(){ animateExplosion(j);}, explosion.timer/explosion.animationFrames.length);
+            }
+        }       
+    }
+
+
+
+    //for animating explosions
+    function animateExplosion(i)
+    {
+        if(explosion[i].curFrame < explosion.animationFrames.length)
+        {
+            explosion[i].curFrame++;
+            setTimeout(function(){ animateExplosion(i);}, explosion.timer/explosion.animationFrames.length);
+        }
+        else
+        {
+            explosion[i].isActive = false;
+            explosion.activeExp--;
+        }
+    }
 
     
     //sets a buffer to redraw the background
@@ -151,6 +282,26 @@ window.addEventListener("load", function()
             break;
         }
 
+        for(i = 0; i < bombs.length; i++)
+            if(bombs[i].isActive)
+                ctx.drawImage(bomb, bombs.animationFrames[bombs[i].curFrame]*size, 0, size, size, bombs[i].xPos, bombs[i].yPos, size, size);
+        for(i = 0; i < explosion.length; i++)
+            if(explosion[i].isActive)
+            {
+                ctx.drawImage(explosions, explosion[i].mid.animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
+                    size, size, explosion[i].mid.xPos, explosion[i].mid.yPos, size, size);
+                for(j = 0; j < explosion.range; j++)
+                {
+                    ctx.drawImage(explosions, explosion[i].left[j].animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
+                        size, size, explosion[i].left[j].xPos, explosion[i].left[j].yPos, size, size);
+                    ctx.drawImage(explosions, explosion[i].up[j].animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
+                        size, size, explosion[i].up[j].xPos, explosion[i].up[j].yPos, size, size);
+                    ctx.drawImage(explosions, explosion[i].right[j].animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
+                        size, size, explosion[i].right[j].xPos, explosion[i].right[j].yPos, size, size);
+                    ctx.drawImage(explosions, explosion[i].down[j].animPos*size, explosion.animationFrames[explosion[i].curFrame]*size, 
+                        size, size, explosion[i].down[j].xPos, explosion[i].down[j].yPos, size, size);
+                }
+            }
         ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
             size, size, bomberman.xPos, bomberman.yPos, size, size);
         setTimeout(function() {buffer();}, frameRate);
