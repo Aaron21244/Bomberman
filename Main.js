@@ -1,6 +1,14 @@
 window.addEventListener("load", function() 
 {
     var size = 32;//size of a tile
+
+    //size of map width (in grids)
+    var mapX = 31;
+    //size of map height 
+    var mapY = 13;
+
+    var lastFire = new Date().getTime(); //used to slow down the keypresses
+    
     //gets the canvas
     var canvas = document.getElementById("canvas");
     var ctx = canvas.getContext("2d");
@@ -16,6 +24,40 @@ window.addEventListener("load", function()
     //get score
     var score = document.getElementById("scoreTot");
 
+    //grids corresponding to the map
+    var grids = new Array(mapX);
+
+    //create array of arrays (2d array)
+    for (var i = 0; i < mapX; i++) {
+        grids[i] = new Array(mapY);
+    }
+
+    //grid class
+    var Grid = function(walkable,x,y)
+    {
+        this.walkable = walkable;
+        this.x = x;
+        this.y = y;
+    }
+    //initialize the grids to match the map
+    for(let i = 0; i < mapX; i++)
+    {
+        for(let j = 0; j < mapY; j++)
+        {
+            if(j == 0 || j == mapY-1 || i == 0 || i == mapX-1)
+                grids[i][j] = new Grid(false,i,j);
+            else if (i % 2 == 0)
+            {
+                if(j % 2 == 0)
+                    grids[i][j] = new Grid(false,i,j);
+                else
+                    grids[i][j] = new Grid(true,i,j);
+            }
+            else
+                grids[i][j] = new Grid(true,i,j);
+            
+        }
+    }
     //loads the map
     var map = new Image();
     map.src = "Art/Map.png";
@@ -53,6 +95,7 @@ window.addEventListener("load", function()
         right: [{x: 3, y: 0}, {x: 4, y: 0}, {x: 3, y: 0}, { x: 5, y: 0}],
         left: [{x: 3, y: 1}, {x: 4, y: 1}, {x: 3, y: 1}, { x: 5, y: 1}]
     };
+    bomberman.curGrid = grids[1][1];
 
     bomberman.onload = function()
     {
@@ -65,6 +108,14 @@ window.addEventListener("load", function()
 
     document.onkeydown = function(e)
     {
+        //ignore button presses that occur within 50 ms
+        var curFire = new Date().getTime();
+        if(curFire - lastFire < 50)
+        {
+            return;
+        }
+        lastFire = curFire;
+        console.log(bomberman.curGrid.x + " " + bomberman.curGrid.y);
         switch(e.keyCode)
         {
             //up arrow
@@ -73,6 +124,17 @@ window.addEventListener("load", function()
                 {
                     bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.up.length;
                     bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                    //if bomberman left the current grid
+                    if(bomberman.curGrid.y * size>= bomberman.yPos + size/2)
+                    {
+                        //if the grid moved to is walkable, set curGrid 
+                        if(grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable)
+                            bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y-1];
+                        //else undo the move
+                        else
+                            bomberman.yPos += size/bomberman.walkFrames.up.length;
+                    }
+
                 }
                 else
                 {
@@ -87,6 +149,16 @@ window.addEventListener("load", function()
                 {
                     bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.down.length;
                     bomberman.yPos += size/bomberman.walkFrames.down.length;
+                    //if bomberman left the current grid
+                    if(bomberman.curGrid.y * size + size <= bomberman.yPos + size/2 + size/3)
+                    {
+                        //if the grid moved to is walkable, set curGrid 
+                        if(grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable)
+                            bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y+1];
+                        //else undo the move
+                        else
+                            bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                    }
                 }
                 else
                 {
@@ -102,6 +174,16 @@ window.addEventListener("load", function()
                 {
                     bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.left.length;
                     bomberman.xPos -= size/bomberman.walkFrames.left.length;
+                    //if bomberman left the current grid
+                    if(bomberman.curGrid.x * size >= bomberman.xPos + size/2)
+                    {
+                        //if the grid moved to is walkable, set curGrid 
+                        if(grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable)
+                            bomberman.curGrid = grids[bomberman.curGrid.x-1][bomberman.curGrid.y];
+                        //else undo the move
+                        else
+                            bomberman.xPos += size/bomberman.walkFrames.left.length;
+                    }
                 }
                 else
                 {
@@ -116,6 +198,17 @@ window.addEventListener("load", function()
                 {
                     bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.right.length;
                     bomberman.xPos += size/bomberman.walkFrames.right.length;
+                    //if bomberman left the current grid
+                    if(bomberman.curGrid.x * size + size <= bomberman.xPos + size/2)
+                    {
+                        //if the grid moved to is walkable, set curGrid 
+                        if(grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable)
+                            bomberman.curGrid = grids[bomberman.curGrid.x+1][bomberman.curGrid.y];
+                        //else undo the move
+                        else
+                            bomberman.xPos -= size/bomberman.walkFrames.left.length;
+                        
+                    }
                 }
                 else
                 {
@@ -123,7 +216,16 @@ window.addEventListener("load", function()
                     bomberman.curFrame = 0;
                 }
             break;				
-        }			
+        }
+
+        map.xPos = bomberman.xPos/size - canvas.clientWidth / size / 2 + 1;
+        //don't go past the left end of the map
+        if(map.xPos < 0)
+            map.xPos = 0;
+        //don't go past the right end of the map
+        else if (map.xPos+canvas.clientWidth/size > mapX)
+            map.xPos = mapX - canvas.clientWidth/size;
+            
     };
 
     
@@ -150,9 +252,9 @@ window.addEventListener("load", function()
                 dir = bomberman.walkFrames.right;
             break;
         }
-
+        //modified to take maps position in account
         ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
-            size, size, bomberman.xPos, bomberman.yPos, size, size);
+            size, size, bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
         setTimeout(function() {buffer();}, frameRate);
     }
 });
