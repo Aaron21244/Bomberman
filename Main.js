@@ -155,7 +155,7 @@ window.addEventListener("load", function()
                     bombs.activeBombs++;
                     bombs[t].curFrame = 0;//current frame in animation cycle
                     bombs[t].cFrame = 0;//current frame up to frames length
-                    bombs[t].xPos = bomberman.curGrid.x * size - map.xPos * size;
+                    bombs[t].xPos = bomberman.curGrid.x * size;
                     bombs[t].yPos = bomberman.curGrid.y * size;
                     bombs[t].isActive = true;
                     setTimeout(function(){ animateBomb(t);}, bombs.timer/ bombs.numFrames);
