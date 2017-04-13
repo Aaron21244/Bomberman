@@ -313,27 +313,67 @@ window.addEventListener("load", function()
                 explosions[explosions.activeExp].up = [];
                 explosions[explosions.activeExp].right = [];
                 explosions[explosions.activeExp].down = [];
-                //if the range is greater than 1, add a new image for each direction
+                //if the range is greater than 2, add a new image for each direction
                 if(explosions.range > 1)
+                { 
+                    var lblock, rblock, ublock, dblock = false;
                     for(j = 0; j < explosions.range; j++)
                     {
-                        explosions[explosions.activeExp].left[j] = {xPos: bombs[i].xPos-(size*(j+1)),
-                            yPos: bombs[i].yPos, animPos: 6};
-                        explosions[explosions.activeExp].up[j] = {xPos: bombs[i].xPos,
-                            yPos: bombs[i].yPos-(size*(j+1)), animPos: 5};
-                        explosions[explosions.activeExp].right[j] = {xPos: bombs[i].xPos+(size*(j+1)),
-                            yPos: bombs[i].yPos, animPos: 6};
-                        explosions[explosions.activeExp].down[j] = {xPos: bombs[i].xPos,
-                            yPos: bombs[i].yPos+(size*(j+1)), animPos: 5};
+                        if(!lblock)
+                        {
+                            if((grids[(bombs[i].xPos-(size*(j+1)))/size][(bombs[i].yPos)/size].walkable))
+                                explosions[explosions.activeExp].left[j] = {xPos: bombs[i].xPos-(size*(j+1)),
+                                    yPos: bombs[i].yPos, animPos: 6};
+                            else 
+                                lblock = true;
+                        }
+                        if(!ublock)
+                        {
+                            if(grids[(bombs[i].xPos)/size][(bombs[i].yPos-(size*(j+1)))/size].walkable)
+                                explosions[explosions.activeExp].up[j] = {xPos: bombs[i].xPos,
+                                    yPos: bombs[i].yPos-(size*(j+1)), animPos: 5};
+                            else
+                                ublock = true;
+                        }
+                        if(!rblock)
+                        {
+                            if(grids[(bombs[i].xPos+(size*(j+1)))/size][(bombs[i].yPos)/size].walkable)
+                                explosions[explosions.activeExp].right[j] = {xPos: bombs[i].xPos+(size*(j+1)),
+                                    yPos: bombs[i].yPos, animPos: 6};
+                            else
+                                rblock = true;
+                        }
+                        if(!dblock)
+                        {
+                            if(grids[(bombs[i].xPos)/size][(bombs[i].yPos+(size*(j+1)))/size].walkable)
+                                explosions[explosions.activeExp].down[j] = {xPos: bombs[i].xPos,
+                                    yPos: bombs[i].yPos+(size*(j+1)), animPos: 5};
+                            else
+                                dblock = true;
+                                
+                        }
                     }
-                explosions[explosions.activeExp].left[explosions.range-1] = 
-                    {xPos: bombs[i].xPos-size, yPos: bombs[i].yPos, animPos: 1};
-                explosions[explosions.activeExp].up[explosions.range-1] = 
-                    {xPos: bombs[i].xPos, yPos: bombs[i].yPos-size, animPos: 2};
-                explosions[explosions.activeExp].right[explosions.range-1] = 
-                    {xPos: bombs[i].xPos+size, yPos: bombs[i].yPos, animPos: 3};
-                explosions[explosions.activeExp].down[explosions.range-1] =
-                    {xPos: bombs[i].xPos, yPos: bombs[i].yPos+size, animPos: 4};
+                 }
+                if(grids[(bombs[i].xPos-size)/size][(bombs[i].yPos)/size].walkable)
+                {
+                    explosions[explosions.activeExp].left[explosions[explosions.activeExp].left.length] = 
+                        {xPos: bombs[i].xPos-size, yPos: bombs[i].yPos, animPos: 1};
+                }
+                if(grids[(bombs[i].xPos)/size][(bombs[i].yPos-size)/size].walkable)
+                {
+                    explosions[explosions.activeExp].up[explosions[explosions.activeExp].up.length] = 
+                        {xPos: bombs[i].xPos, yPos: bombs[i].yPos-size, animPos: 2};
+                }
+                if(grids[(bombs[i].xPos+size)/size][(bombs[i].yPos)/size].walkable)
+                {
+                    explosions[explosions.activeExp].right[explosions[explosions.activeExp].right.length] = 
+                        {xPos: bombs[i].xPos+size, yPos: bombs[i].yPos, animPos: 3};
+                }
+                if(grids[(bombs[i].xPos)/size][(bombs[i].yPos+size)/size].walkable)
+                {
+                    explosions[explosions.activeExp].down[explosions[explosions.activeExp].down.length] =
+                        {xPos: bombs[i].xPos, yPos: bombs[i].yPos+size, animPos: 4};
+                }
                 explosions[explosions.activeExp].curFrame = 0;
                 explosions[explosions.activeExp].isActive = true;
                 var j = explosions.activeExp;
@@ -398,14 +438,18 @@ window.addEventListener("load", function()
                     size, size, explosions[i].mid.xPos - map.xPos*size , explosions[i].mid.yPos - map.yPos*size, size, size);
                 for(j = 0; j < explosions.range; j++)
                 {
-                    ctx.drawImage(explosion, explosions[i].left[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
-                        size, size, explosions[i].left[j].xPos - map.xPos*size, explosions[i].left[j].yPos - map.yPos*size, size, size);
-                    ctx.drawImage(explosion, explosions[i].up[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
-                        size, size, explosions[i].up[j].xPos - map.xPos*size, explosions[i].up[j].yPos - map.yPos*size, size, size);
-                    ctx.drawImage(explosion, explosions[i].right[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
-                        size, size, explosions[i].right[j].xPos - map.xPos*size, explosions[i].right[j].yPos - map.yPos*size, size, size);
-                    ctx.drawImage(explosion, explosions[i].down[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
-                        size, size, explosions[i].down[j].xPos - map.xPos*size, explosions[i].down[j].yPos - map.yPos*size, size, size);
+                    if(explosions[i].left[j])
+                        ctx.drawImage(explosion, explosions[i].left[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
+                            size, size, explosions[i].left[j].xPos - map.xPos*size, explosions[i].left[j].yPos - map.yPos*size, size, size);
+                    if(explosions[i].up[j])
+                        ctx.drawImage(explosion, explosions[i].up[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
+                            size, size, explosions[i].up[j].xPos - map.xPos*size, explosions[i].up[j].yPos - map.yPos*size, size, size);
+                    if(explosions[i].right[j])
+                        ctx.drawImage(explosion, explosions[i].right[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
+                            size, size, explosions[i].right[j].xPos - map.xPos*size, explosions[i].right[j].yPos - map.yPos*size, size, size);
+                    if(explosions[i].down[j])
+                        ctx.drawImage(explosion, explosions[i].down[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
+                            size, size, explosions[i].down[j].xPos - map.xPos*size, explosions[i].down[j].yPos - map.yPos*size, size, size);
 
                 }
             }
