@@ -33,11 +33,12 @@ window.addEventListener("load", function()
     }
 
     //grid class
-    var Grid = function(walkable,x,y)
-    {
+    var Grid = function(walkable,x,y,hasBlock)
+    {   
         this.walkable = walkable;
         this.x = x;
         this.y = y;
+        this.hasBlock = hasBlock;
     }
     //initialize the grids to match the map
     for(let i = 0; i < mapX; i++)
@@ -45,19 +46,112 @@ window.addEventListener("load", function()
         for(let j = 0; j < mapY; j++)
         {
             if(j == 0 || j == mapY-1 || i == 0 || i == mapX-1)
-                grids[i][j] = new Grid(false,i,j);
+                grids[i][j] = new Grid(false,i,j,false);
             else if (i % 2 == 0)
             {
                 if(j % 2 == 0)
-                    grids[i][j] = new Grid(false,i,j);
+                    grids[i][j] = new Grid(false,i,j,false);
                 else
-                    grids[i][j] = new Grid(true,i,j);
+                    grids[i][j] = new Grid(true,i,j,false);
             }
             else
-                grids[i][j] = new Grid(true,i,j);
+                grids[i][j] = new Grid(true,i,j,false);
             
         }
     }
+    
+
+    //Place soft blocks down around the map
+    var softBlocks = [];
+    var softBlock = function(x, y)
+    {
+        this.img = new Image();
+        this.img.src = "Art/Brick.png";
+        this.xPos = x;
+        this.yPos = y;
+    }
+    
+    //Number of Blocks to placedown onto the map
+    var numBlocks = 35;
+
+    //Call setSoftBlocks function
+    setSoftBlocks(numBlocks); 
+    //Takes the number of softBlocks to be placed on the map randomly
+    function setSoftBlocks(numSB) 
+    {   
+        //Min zone around the player to place blocks
+        var min = 1;
+        //Buffer zone around the player(Cord 1,1 for now, THIS DOESNT TAKE INTO ACCOUNT PLYER STRT POS CHANGE) in a square formation
+        var bufZone = 2;
+        for (let i = 0; i < numSB; i++)
+        {
+            //Obtain random x and y cords to place the soft block
+            var xCord = getRandomIntInclusive(min, mapX-1);
+            var yCord = getRandomIntInclusive(min, mapY-1);
+            
+            //Check for a n-block bufferzone around the player
+            while (xCord <= bufZone && yCord <= bufZone)
+            {
+                //Generate a ran int to decide which cord to change
+                //This is done for a truly unique block placement
+                var rNum = getRandomIntInclusive(1, 2);
+                if (rNum == 1) 
+                {
+                    xCord = getRandomIntInclusive(min, mapX-1);
+                }
+                else 
+                {
+                    yCord = getRandomIntInclusive(min, mapY-1);
+                }
+            }
+
+            //Check if the block isnt walkable before placing
+            while (grids[xCord][yCord].walkable == false) {
+                //Generate new cords and test again
+                xCord = getRandomIntInclusive(min, mapX-1);
+                yCord = getRandomIntInclusive(min, mapY-1);
+
+                //Check for a n-block bufferzone around the player
+                while (xCord <= bufZone && yCord <= bufZone)
+                {
+                    //Generate a ran int to decide which cord to change
+                    //This is done for a truly unique block placement
+                    var rNum = getRandomIntInclusive(1, 2);
+                    if (rNum == 1) 
+                    {
+                        xCord = getRandomIntInclusive(min, mapX-1);
+                    }
+                    else 
+                    {
+                        yCord = getRandomIntInclusive(min, mapY-1);
+                    }
+                }
+            }
+            
+            //Add the new block to the array
+            softBlocks[i] = new softBlock(xCord*size, yCord*size);
+            
+            //Set the grid cord the block is being placed into a non-walkable state
+            grids[xCord][yCord].walkable = false;
+        }
+    };
+
+    //Returns a random number between the passed values
+    function getRandomIntInclusive(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    //Holds the current blocks that need exploded
+    var blocksToBlow = [];
+    //Class struct holds the blocks cords
+    var blockToBlow = function(x, y)
+    {
+        this.xPos = x;
+        this.yPos = y;
+    };
+
     //loads the map
     var map = new Image();
     map.src = "Art/Map.png";
@@ -285,10 +379,8 @@ window.addEventListener("load", function()
             map.xPos = mapX - canvas.clientWidth/size;
             
     };
-
- 
-
        
+
     //function for setting timers to animate bombs
     function animateBomb(i)
     {
@@ -324,7 +416,7 @@ window.addEventListener("load", function()
                             if((grids[(bombs[i].xPos-(size*(j+1)))/size][(bombs[i].yPos)/size].walkable))
                                 explosions[explosions.activeExp].left[j] = {xPos: bombs[i].xPos-(size*(j+1)),
                                     yPos: bombs[i].yPos, animPos: 6};
-                            else 
+                            else
                                 lblock = true;
                         }
                         if(!ublock)
@@ -353,7 +445,7 @@ window.addEventListener("load", function()
                                 
                         }
                     }
-                 }
+                }
                 if(grids[(bombs[i].xPos-size)/size][(bombs[i].yPos)/size].walkable)
                 {
                     explosions[explosions.activeExp].left[explosions[explosions.activeExp].left.length] = 
@@ -383,8 +475,6 @@ window.addEventListener("load", function()
         }       
     }
 
-
-
     //for animating explosions
     function animateexplosion(i)
     {
@@ -399,7 +489,6 @@ window.addEventListener("load", function()
             explosions.activeExp--;
         }
     }
-
     
     //sets a buffer to redraw the background
     function buffer()
@@ -454,6 +543,13 @@ window.addEventListener("load", function()
                 }
             }
 
+        //Drawing of soft blocks
+        for (let i = 0; i < softBlocks.length; i++) {
+            ctx.drawImage(softBlocks[i].img, 0, 0, size, size,
+             softBlocks[i].xPos- map.xPos*size, softBlocks[i].yPos - map.yPos*size, size, size);
+        }
+
+        
         //modified to take maps position in account
         ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
             size, size, bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
