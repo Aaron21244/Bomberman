@@ -97,7 +97,7 @@ window.addEventListener("load", function()
         left: [{x: 3, y: 1}, {x: 4, y: 1}, {x: 3, y: 1}, { x: 5, y: 1}]
     };
     bomberman.curGrid = grids[1][1];
-
+	
     var bombs = [];//array of bombs
     bombs.numBombs = 1;//number of bombs allowed
     bombs.activeBombs = 0;
@@ -130,6 +130,20 @@ window.addEventListener("load", function()
     {
         ctx.drawImage(bomberman, bomberman.walkFrames.right[bomberman.curFrame].x*size, bomberman.walkFrames.right[bomberman.curFrame].y*size,
             size, size, bomberman.xPos, bomberman.yPos, size, size);
+    }
+	
+	var barom = new Image();
+	barom.src = "Art/Barom.png";
+    barom.xPos = 96;//position on board
+    barom.yPos = 32;//position on board
+    barom.curFrame = 0;
+    barom.curDir = true;
+	barom.numFrames = 10;
+	barom.pacer = 0;
+	
+	barom.onload = function()
+    {
+        ctx.drawImage(barom, 0, 0,size,size,barom.xPos,barom.yPos,352,32);
     }
 
     setTimeout(function() { tickTimer();}, 1000);
@@ -404,6 +418,27 @@ window.addEventListener("load", function()
     //sets a buffer to redraw the background
     function buffer()
     {     
+		
+		if(barom.curFrame == 5){
+				barom.curFrame = 0;
+		}
+		else{
+			if(barom.pacer == 10){
+				barom.curFrame++;
+				
+				barom.pacer = 0;
+			}
+			else{
+			if(barom.xPos == 240 || barom.xPos == 64)
+					barom.curDir = !barom.curDir;
+				if(barom.curDir)
+					barom.xPos++;
+				else
+					barom.xPos--;
+				barom.pacer++;
+			}	
+			
+		}
         ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
         ctx.drawImage(map, map.xPos*size, map.yPos*size, canvas.clientWidth, canvas.clientHeight, 
             0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -457,6 +492,8 @@ window.addEventListener("load", function()
         //modified to take maps position in account
         ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
             size, size, bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
+			
+		ctx.drawImage(barom, barom.curFrame*size, 0,size,size,barom.xPos,barom.yPos,size,size);
         setTimeout(function() {buffer();}, frameRate);
     }
 });
