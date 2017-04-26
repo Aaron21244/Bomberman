@@ -121,7 +121,7 @@ window.addEventListener("load", function()
     explosions.activeExp = 0;
     var explosion = new Image();
     explosion.src = "Art/Explosion.png";
-    explosions.range = 2;//range of explosions
+    explosions.range = 1;//range of explosions
     explosions.animationFrames = [0,1,2,3,3,2,1,0];//animation frames for explosions
     explosions.timer = 500;//time to explode
 
@@ -137,14 +137,14 @@ window.addEventListener("load", function()
         for(var i = 0; i < numBricks; i++)
         {
             bricks[i] = {};
-            bricks[i].xPos = (1+Math.floor(Math.random() * 30))  * size;
-            bricks[i].yPos = (1+Math.floor(Math.random() * 11))  * size;
+            bricks[i].xPos = (1+Math.floor(Math.random() * (mapX-1)))  * size;
+            bricks[i].yPos = (1+Math.floor(Math.random() * (mapY-2)))  * size;
             //assures brick is in a walkable position
             while(!grids[bricks[i].xPos/size][bricks[i].yPos/size].walkable || (bricks[i].xPos/size == 1 && bricks[i].yPos/size == 1) ||
                 (bricks[i].xPos/size == 2 && bricks[i].yPos/size == 1) || (bricks[i].xPos/size == 1 && bricks[i].yPos/size == 2))
             {
-                bricks[i].xPos = (1+Math.floor(Math.random() * 30))  * size;
-                bricks[i].yPos = (1+Math.floor(Math.random() * 11))  * size;
+                bricks[i].xPos = (1+Math.floor(Math.random() * (mapX-1)))  * size;
+                bricks[i].yPos = (1+Math.floor(Math.random() * (mapY-2)))  * size;
             }
             console.log(bricks[i].xPos/size + ", " + bricks[i].yPos/size);
             //sets grid walkable to false
