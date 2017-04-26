@@ -17,8 +17,7 @@ window.addEventListener("load", function()
     var timer = document.getElementById("timeLeft");
     timer.textContent = 200;
 
-    //gets lives
-    var lives = document.getElementById("livesLeft");
+    //gets lives    var lives = document.getElementById("livesLeft");
     lives.textContent = 2;
 
     //get score
@@ -28,17 +27,18 @@ window.addEventListener("load", function()
     var grids = new Array(mapX);
 
     //create array of arrays (2d array)
-    for (var i = 0; i < mapX; i++) {
-        grids[i] = new Array(mapY);
+    for (var i = 0; i < mapX; i++) {        grids[i] = new Array(mapY);
     }
 
     //grid class
+
     var Grid = function(walkable,x,y,hasBlock)
     {   
         this.walkable = walkable;
         this.x = x;
         this.y = y;
         this.hasBlock = hasBlock;
+
     }
     //initialize the grids to match the map
     for(let i = 0; i < mapX; i++)
@@ -46,6 +46,7 @@ window.addEventListener("load", function()
         for(let j = 0; j < mapY; j++)
         {
             if(j == 0 || j == mapY-1 || i == 0 || i == mapX-1)
+
                 grids[i][j] = new Grid(false,i,j,false);
             else if (i % 2 == 0)
             {
@@ -56,6 +57,7 @@ window.addEventListener("load", function()
             }
             else
                 grids[i][j] = new Grid(true,i,j,false);
+
             
         }
     }
@@ -217,7 +219,7 @@ window.addEventListener("load", function()
     explosions.range = 2;//range of explosions
     explosions.animationFrames = [0,1,2,3,3,2,1,0];//animation frames for explosions
     explosions.timer = 500;//time to explode
-    
+
     
 
     bomberman.onload = function()
@@ -496,7 +498,7 @@ window.addEventListener("load", function()
         ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
         ctx.drawImage(map, map.xPos*size, map.yPos*size, canvas.clientWidth, canvas.clientHeight, 
             0, 0, canvas.clientWidth, canvas.clientHeight);
-        
+
         var dir;
         switch(bomberman.curDir)
         {
@@ -516,11 +518,11 @@ window.addEventListener("load", function()
 
         //minused bomb and explosions xPos by the camera position (map.xPos*size) to get the actual pos of the object
         //on the map
-        for(i = 0; i < bombs.length; i++)
+        for(var i = 0; i < bombs.length; i++)
             if(bombs[i].isActive)
 
                 ctx.drawImage(bomb, bombs.animationFrames[bombs[i].curFrame]*size, 0, size, size, bombs[i].xPos - map.xPos*size, bombs[i].yPos - map.yPos*size, size, size);
-        for(i = 0; i < explosions.length; i++)
+        for(var i = 0; i < explosions.length; i++)
             if(explosions[i].isActive)
             {
                 ctx.drawImage(explosion, explosions[i].mid.animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
@@ -542,6 +544,7 @@ window.addEventListener("load", function()
 
                 }
             }
+            
 
         //Drawing of soft blocks
         for (let i = 0; i < softBlocks.length; i++) {
