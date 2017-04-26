@@ -33,11 +33,12 @@ window.addEventListener("load", function()
     }
 
     //grid class
-    var Grid = function(walkable,x,y)
+    var Grid = function(walkable,x,y, isBrick)
     {
         this.walkable = walkable;
         this.x = x;
         this.y = y;
+        this.isBrick = isBrick;
     }
     //initialize the grids to match the map
     for(let i = 0; i < mapX; i++)
@@ -45,16 +46,16 @@ window.addEventListener("load", function()
         for(let j = 0; j < mapY; j++)
         {
             if(j == 0 || j == mapY-1 || i == 0 || i == mapX-1)
-                grids[i][j] = new Grid(false,i,j);
+                grids[i][j] = new Grid(false,i,j, false);
             else if (i % 2 == 0)
             {
                 if(j % 2 == 0)
-                    grids[i][j] = new Grid(false,i,j);
+                    grids[i][j] = new Grid(false,i,j, false);
                 else
-                    grids[i][j] = new Grid(true,i,j);
+                    grids[i][j] = new Grid(true,i,j, false);
             }
             else
-                grids[i][j] = new Grid(true,i,j);
+                grids[i][j] = new Grid(true,i,j, false);
             
         }
     }
@@ -123,8 +124,38 @@ window.addEventListener("load", function()
     explosions.range = 2;//range of explosions
     explosions.animationFrames = [0,1,2,3,3,2,1,0];//animation frames for explosions
     explosions.timer = 500;//time to explode
+
+    var bricks = [];
+    var brick = new Image();
+    brick.src = "Art/Brick.png";
+    brick.timer = 300;//time to explode
+    var numBricks = 50;//number of bricks
     
-    
+    brick.onload = function()
+    {
+        //draw bricks
+        for(var i = 0; i < numBricks; i++)
+        {
+            bricks[i] = {};
+            bricks[i].xPos = (1+Math.floor(Math.random() * 30))  * size;
+            bricks[i].yPos = (1+Math.floor(Math.random() * 11))  * size;
+            //assures brick is in a walkable position
+            while(!grids[bricks[i].xPos/size][bricks[i].yPos/size].walkable || (bricks[i].xPos/size == 1 && bricks[i].yPos/size == 1) ||
+                (bricks[i].xPos/size == 2 && bricks[i].yPos/size == 1) || (bricks[i].xPos/size == 1 && bricks[i].yPos/size == 2))
+            {
+                bricks[i].xPos = (1+Math.floor(Math.random() * 30))  * size;
+                bricks[i].yPos = (1+Math.floor(Math.random() * 11))  * size;
+            }
+            console.log(bricks[i].xPos/size + ", " + bricks[i].yPos/size);
+            //sets grid walkable to false
+            grids[bricks[i].xPos/size][bricks[i].yPos/size].walkable = false;
+            grids[bricks[i].xPos/size][bricks[i].yPos/size].isBrick = true;
+            bricks[i].isActive = true;
+            bricks[i].curFrame = 0;
+
+            ctx.drawImage(brick, bricks[i].curFrame *size, 0, size, size, bricks[i].xPos, bricks[i].yPos, size, size);
+        }
+    }
 
     bomberman.onload = function()
     {
@@ -407,7 +438,11 @@ window.addEventListener("load", function()
         ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
         ctx.drawImage(map, map.xPos*size, map.yPos*size, canvas.clientWidth, canvas.clientHeight, 
             0, 0, canvas.clientWidth, canvas.clientHeight);
-        
+        //draws bricks
+        for(var i =  0; i < bricks.length; i++)
+            if(bricks[i].isActive)
+                ctx.drawImage(brick, bricks[i].curFrame*size, 0, size, size, bricks[i].xPos  - map.xPos*size, bricks[i].yPos, size, size);
+
         var dir;
         switch(bomberman.curDir)
         {
@@ -427,11 +462,11 @@ window.addEventListener("load", function()
 
         //minused bomb and explosions xPos by the camera position (map.xPos*size) to get the actual pos of the object
         //on the map
-        for(i = 0; i < bombs.length; i++)
+        for(var i = 0; i < bombs.length; i++)
             if(bombs[i].isActive)
 
                 ctx.drawImage(bomb, bombs.animationFrames[bombs[i].curFrame]*size, 0, size, size, bombs[i].xPos - map.xPos*size, bombs[i].yPos - map.yPos*size, size, size);
-        for(i = 0; i < explosions.length; i++)
+        for(var i = 0; i < explosions.length; i++)
             if(explosions[i].isActive)
             {
                 ctx.drawImage(explosion, explosions[i].mid.animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
@@ -453,6 +488,7 @@ window.addEventListener("load", function()
 
                 }
             }
+            
 
         //modified to take maps position in account
         ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
