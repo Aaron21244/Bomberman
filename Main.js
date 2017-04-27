@@ -66,12 +66,33 @@ window.addEventListener("load", function()
 
     //Place soft blocks down around the map
     var softBlocks = [];
+    softBlocks.numFrames = 7;//number of frames in an explosion
+    softBlocks.timer = 700;//time to explode
     var softBlock = function(x, y)
     {
-        this.img = new Image();
-        this.img.src = "Art/Brick.png";
-        this.xPos = x;
-        this.yPos = y;
+        var obj = {};
+        obj.img = new Image();
+        obj.img.src = "Art/Brick.png";
+        obj.xPos = x;
+        obj.yPos = y;
+        obj.curFrame = 0;//current frame
+        obj.explode = function()
+        {
+            console.log(obj.curFrame);
+            obj.curFrame++;
+            if(obj.curFrame < softBlocks.numFrames)
+                setTimeout(function(){obj.explode();}, softBlocks.timer/softBlocks.numFrames);
+            else
+            {
+                obj.isActive = false;
+                grids[obj.xPos/size][obj.yPos/size].walkable = true;
+                grids[obj.xPos/size][obj.yPos/size].hasBlock = false;
+            }
+        }
+
+        obj.isActive = true;//added is active clause for blocks
+        
+        return obj;
     }
     
     //Number of Blocks to placedown onto the map
@@ -132,10 +153,12 @@ window.addEventListener("load", function()
             }
             
             //Add the new block to the array
-            softBlocks[i] = new softBlock(xCord*size, yCord*size);
+            softBlocks[i] = softBlock(xCord*size, yCord*size);
             
             //Set the grid cord the block is being placed into a non-walkable state
             grids[xCord][yCord].walkable = false;
+            //sets the block to true
+            grids[xCord][yCord].hasBlock = true;
         }
     };
 
@@ -146,14 +169,6 @@ window.addEventListener("load", function()
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    //Holds the current blocks that need exploded
-    var blocksToBlow = [];
-    //Class struct holds the blocks cords
-    var blockToBlow = function(x, y)
-    {
-        this.xPos = x;
-        this.yPos = y;
-    };
 
     //loads the map
     var map = new Image();
@@ -267,7 +282,6 @@ window.addEventListener("load", function()
             return;
         }
         lastFire = curFire;
-        //console.log(bomberman.curGrid.x + " " + bomberman.curGrid.y);
         switch(e.keyCode)
         {
             //up arrow
@@ -406,6 +420,8 @@ window.addEventListener("load", function()
                 explosions[explosions.activeExp].up = [];
                 explosions[explosions.activeExp].right = [];
                 explosions[explosions.activeExp].down = [];
+
+                var blocksToExplode = [];
                 //if the range is greater than 2, add a new image for each direction
                 if(explosions.range > 1)
                 { 
@@ -418,7 +434,21 @@ window.addEventListener("load", function()
                                 explosions[explosions.activeExp].left[j] = {xPos: bombs[i].xPos-(size*(j+1)),
                                     yPos: bombs[i].yPos, animPos: 6};
                             else
+                            {
+                                //if the current block is a brick
+                                if((grids[(bombs[i].xPos-(size*(j+1)))/size][(bombs[i].yPos)/size].hasBlock))
+                                {
+                                    explosions[explosions.activeExp].left[j] = {xPos: bombs[i].xPos-(size*(j+1)),
+                                        yPos: bombs[i].yPos, animPos: 6};
+                                    
+                                    for(var k = 0; k < softBlocks.length; k++)
+                                        if(softBlocks[k].xPos == bombs[i].xPos-(size*(j+1)) && softBlocks[k].yPos == bombs[i].yPos)
+                                        {
+                                            blocksToExplode[blocksToExplode.length] = softBlocks[k];
+                                        }
+                                }
                                 lblock = true;
+                            }
                         }
                         if(!ublock)
                         {
@@ -426,7 +456,20 @@ window.addEventListener("load", function()
                                 explosions[explosions.activeExp].up[j] = {xPos: bombs[i].xPos,
                                     yPos: bombs[i].yPos-(size*(j+1)), animPos: 5};
                             else
+                            {
+                                if(grids[(bombs[i].xPos)/size][(bombs[i].yPos-(size*(j+1)))/size].hasBlock)
+                                { 
+                                    explosions[explosions.activeExp].up[j] = {xPos: bombs[i].xPos,
+                                        yPos: bombs[i].yPos-(size*(j+1)), animPos: 5};
+
+                                    for(var k = 0; k < softBlocks.length; k++)
+                                        if(softBlocks[k].xPos == bombs[i].xPos && softBlocks[k].yPos == bombs[i].yPos-(size*(j+1)))
+                                        {
+                                            blocksToExplode[blocksToExplode.length] = softBlocks[k];
+                                        }
+                                }
                                 ublock = true;
+                            }
                         }
                         if(!rblock)
                         {
@@ -434,7 +477,20 @@ window.addEventListener("load", function()
                                 explosions[explosions.activeExp].right[j] = {xPos: bombs[i].xPos+(size*(j+1)),
                                     yPos: bombs[i].yPos, animPos: 6};
                             else
+                            {
+                                if(grids[(bombs[i].xPos+(size*(j+1)))/size][(bombs[i].yPos)/size].hasBlock)
+                                {
+                                    explosions[explosions.activeExp].right[j] = {xPos: bombs[i].xPos+(size*(j+1)),
+                                        yPos: bombs[i].yPos, animPos: 6};
+
+                                    for(var k = 0; k < softBlocks.length; k++)
+                                        if(softBlocks[k].xPos == bombs[i].xPos+(size*(j+1)) && softBlocks[k].yPos == bombs[i].yPos)
+                                        {
+                                            blocksToExplode[blocksToExplode.length] = softBlocks[k];
+                                        }
+                                }
                                 rblock = true;
+                            }
                         }
                         if(!dblock)
                         {
@@ -442,36 +498,106 @@ window.addEventListener("load", function()
                                 explosions[explosions.activeExp].down[j] = {xPos: bombs[i].xPos,
                                     yPos: bombs[i].yPos+(size*(j+1)), animPos: 5};
                             else
-                                dblock = true;
+                            {
+                                if(grids[(bombs[i].xPos)/size][(bombs[i].yPos+(size*(j+1)))/size].hasBlock)
+                                {
+                                    explosions[explosions.activeExp].down[j] = {xPos: bombs[i].xPos,
+                                        yPos: bombs[i].yPos+(size*(j+1)), animPos: 5};
+
+                                    for(var k = 0; k < softBlocks.length; k++)
+                                        if(softBlocks[k].xPos == bombs[i].xPos && softBlocks[k].yPos == bombs[i].yPos+(size*(j+1)))
+                                        {
+                                            blocksToExplode[blocksToExplode.length] = softBlocks[k];
+                                        }
                                 
+                                }
+                                dblock = true;
+                            }
                         }
                     }
                 }
-                if(grids[(bombs[i].xPos-size)/size][(bombs[i].yPos)/size].walkable)
+                
+                if(grids[(bombs[i].xPos-size)/size][(bombs[i].yPos)/size].walkable )
                 {
                     explosions[explosions.activeExp].left[explosions[explosions.activeExp].left.length] = 
                         {xPos: bombs[i].xPos-size, yPos: bombs[i].yPos, animPos: 1};
                 }
+                //if the block is explodable 
+                else if(grids[(bombs[i].xPos-size)/size][(bombs[i].yPos)/size].hasBlock)
+                {
+                    explosions[explosions.activeExp].left[explosions[explosions.activeExp].left.length] = 
+                        {xPos: bombs[i].xPos-size, yPos: bombs[i].yPos, animPos: 1};
+                    for(var k = 0; k < softBlocks.length; k++)
+                        if(softBlocks[k].xPos == bombs[i].xPos-size && softBlocks[k].yPos == bombs[i].yPos)
+                        {
+                            blocksToExplode[blocksToExplode.length] = softBlocks[k];                        
+                        }
+                    
+                }
+                
                 if(grids[(bombs[i].xPos)/size][(bombs[i].yPos-size)/size].walkable)
                 {
                     explosions[explosions.activeExp].up[explosions[explosions.activeExp].up.length] = 
                         {xPos: bombs[i].xPos, yPos: bombs[i].yPos-size, animPos: 2};
                 }
+                //if the block is explodable
+                else if(grids[(bombs[i].xPos)/size][(bombs[i].yPos-size)/size].hasBlock)
+                {
+                    explosions[explosions.activeExp].up[explosions[explosions.activeExp].up.length] = 
+                        {xPos: bombs[i].xPos, yPos: bombs[i].yPos-size, animPos: 2};
+
+                    for(var k = 0; k < softBlocks.length; k++)
+                        if(softBlocks[k].xPos == bombs[i].xPos && softBlocks[k].yPos == bombs[i].yPos-size)
+                        {
+                            blocksToExplode[blocksToExplode.length] = softBlocks[k];
+                        }
+                }
+
                 if(grids[(bombs[i].xPos+size)/size][(bombs[i].yPos)/size].walkable)
                 {
                     explosions[explosions.activeExp].right[explosions[explosions.activeExp].right.length] = 
                         {xPos: bombs[i].xPos+size, yPos: bombs[i].yPos, animPos: 3};
                 }
+                //if the block is explodable
+                else if(grids[(bombs[i].xPos+size)/size][(bombs[i].yPos)/size].hasBlock)
+                {
+                    explosions[explosions.activeExp].right[explosions[explosions.activeExp].right.length] = 
+                        {xPos: bombs[i].xPos+size, yPos: bombs[i].yPos, animPos: 3};
+
+                    for(var k = 0; k < softBlocks.length; k++)
+                        if(softBlocks[k].xPos == bombs[i].xPos+size && softBlocks[k].yPos == bombs[i].yPos)
+                        {
+                            blocksToExplode[blocksToExplode.length] = softBlocks[k];
+                        }
+                }
+                
                 if(grids[(bombs[i].xPos)/size][(bombs[i].yPos+size)/size].walkable)
                 {
                     explosions[explosions.activeExp].down[explosions[explosions.activeExp].down.length] =
                         {xPos: bombs[i].xPos, yPos: bombs[i].yPos+size, animPos: 4};
+                }
+                //if the block is explodable
+                else if(grids[(bombs[i].xPos)/size][(bombs[i].yPos+size)/size].hasBlock)
+                {
+                    explosions[explosions.activeExp].down[explosions[explosions.activeExp].down.length] =
+                        {xPos: bombs[i].xPos, yPos: bombs[i].yPos+size, animPos: 4};
+
+                    for(var k = 0; k < softBlocks.length; k++)
+                        if(softBlocks[k].xPos == bombs[i].xPos && softBlocks[k].yPos == bombs[i].yPos+size)
+                        {
+                            blocksToExplode[blocksToExplode.length] = softBlocks[k];
+                        }
                 }
                 explosions[explosions.activeExp].curFrame = 0;
                 explosions[explosions.activeExp].isActive = true;
                 var j = explosions.activeExp;
                 explosions.activeExp++;
                 setTimeout(function(){ animateexplosion(j);}, explosions.timer/explosions.animationFrames.length);
+                if(blocksToExplode.length > 0)
+                    setTimeout(function(){
+                        for(var i = 0; i < blocksToExplode.length; i++)
+                        blocksToExplode[i].explode();
+                    }, 450);
             }
         }       
     }
@@ -498,6 +624,15 @@ window.addEventListener("load", function()
         ctx.drawImage(map, map.xPos*size, map.yPos*size, canvas.clientWidth, canvas.clientHeight, 
             0, 0, canvas.clientWidth, canvas.clientHeight);
 
+        //Drawing of soft blocks
+        for (let i = 0; i < softBlocks.length; i++)
+        {
+            //if the block is active
+            if(softBlocks[i].isActive)
+                ctx.drawImage(softBlocks[i].img, softBlocks[i].curFrame * size, 0, size, size,
+                    softBlocks[i].xPos- map.xPos*size, softBlocks[i].yPos - map.yPos*size, size, size);
+        }
+
         var dir;
         switch(bomberman.curDir)
         {
@@ -519,7 +654,6 @@ window.addEventListener("load", function()
         //on the map
         for(var i = 0; i < bombs.length; i++)
             if(bombs[i].isActive)
-
                 ctx.drawImage(bomb, bombs.animationFrames[bombs[i].curFrame]*size, 0, size, size, bombs[i].xPos - map.xPos*size, bombs[i].yPos - map.yPos*size, size, size);
         for(var i = 0; i < explosions.length; i++)
             if(explosions[i].isActive)
@@ -545,11 +679,7 @@ window.addEventListener("load", function()
             }
             
 
-        //Drawing of soft blocks
-        for (let i = 0; i < softBlocks.length; i++) {
-            ctx.drawImage(softBlocks[i].img, 0, 0, size, size,
-             softBlocks[i].xPos- map.xPos*size, softBlocks[i].yPos - map.yPos*size, size, size);
-        }
+        
 
         
         //modified to take maps position in account
