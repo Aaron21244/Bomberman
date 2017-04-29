@@ -170,6 +170,7 @@ window.addEventListener("load", function()
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
+        //adds the powerup
         var powerUp = new Image();
         powerUp.src = "Art/Powerup.png";
         powerUp.numPowerUps = 8;
@@ -177,8 +178,17 @@ window.addEventListener("load", function()
         powerUp.blockIndex = getRandomIntInclusive(0, softBlocks.length-1);
         powerUp.xPos = softBlocks[powerUp.blockIndex].xPos;
         powerUp.yPos = softBlocks[powerUp.blockIndex].yPos;
-        console.log(powerUp.xPos + ", " + powerUp.yPos);
+        //console.log(powerUp.xPos + ", " + powerUp.yPos);
         powerUp.isActive = true;
+
+        //adds the exit
+        var targetDoor = new Image();
+        targetDoor.src = "Art/Door.png";
+        targetDoor.blockIndex = getRandomIntInclusive(0, softBlocks.length-1); 
+        while(targetDoor.blockIndex == powerUp.blockIndex)
+            targetDoor.blockIndex = getRandomIntInclusive(0, softBlocks.length-1);
+        targetDoor.xPos = softBlocks[targetDoor.blockIndex].xPos;
+        targetDoor.yPos = softBlocks[targetDoor.blockIndex].yPos;
 
         //loads the map
         var map = new Image();
@@ -416,9 +426,15 @@ window.addEventListener("load", function()
 
         function checkPosition()
         {
+            //found powerup
             if(powerUp.isActive && bomberman.xPos+size-1 >= powerUp.xPos && bomberman.xPos-size+1 <= powerUp.xPos &&
                 bomberman.yPos+size-1 >= powerUp.yPos && bomberman.yPos-size+1 <= powerUp.yPos)
                     usePowerUp();
+
+            //found exit
+            if(bomberman.xPos+size-1 >= targetDoor.xPos && bomberman.xPos-size+1 <= targetDoor.xPos &&
+                bomberman.yPos+size-1 >= targetDoor.yPos && bomberman.yPos-size+1 <= targetDoor.yPos)
+                    startGame(level+1);
         }
 
         function usePowerUp()
@@ -667,6 +683,10 @@ window.addEventListener("load", function()
             if(powerUp.isActive)
                 ctx.drawImage(powerUp, powerUp.curPowerUp * size, 0, size, size, 
                     powerUp.xPos - map.xPos*size, powerUp.yPos - map.yPos*size, size, size);
+
+            //draws door
+            ctx.drawImage(targetDoor, 0, 0, size, size, targetDoor.xPos - map.xPos*size, 
+                targetDoor.yPos - map.yPos*size, size, size);
 
             //Drawing of soft blocks
             for (let i = 0; i < softBlocks.length; i++)
