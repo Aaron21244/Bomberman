@@ -135,16 +135,45 @@ window.addEventListener("load", function()
 	var barom = new Image();
 	barom.src = "Art/Barom.png";
     barom.xPos = 96;//position on board
-    barom.yPos = 32;//position on board
+    barom.yPos = 64;//position on board
     barom.curFrame = 0;
-    barom.curDir = true;
+    barom.curDir = 1;
 	barom.numFrames = 10;
 	barom.pacer = 0;
+	barom.curGrid = grids[3][2];
+	barom.chageDirTimer = 0;
 	
 	barom.onload = function()
     {
-        ctx.drawImage(barom, 0, 0,size,size,barom.xPos,barom.yPos,352,32);
+        ctx.drawImage(barom, 0, 0,size,size,barom.xPos,barom.yPos,size,size);
     }
+	
+	var baroms = [];//array of baroms
+	baroms.count = 7;
+	var bxPos = 96;
+	var byPos = 64;
+	var curX = 3;
+	var curY = 2;
+	var pacerStart = 0;
+	var dirTimer = 0;
+	for(i = 0; i < baroms.count; i++){
+		baroms[i] = {};
+		baroms[i].xPos = bxPos;
+		baroms[i].yPos = byPos;
+		baroms[i].isActive = true;
+		baroms[i].curFrame = 0; 
+		baroms[i].curDir = Math.floor((Math.random() * 4) + 1);
+		baroms[i].pacer = pacerStart;
+		baroms[i].curGrid = grids[curX][curY];
+		baroms[i].chageDirTimer = dirTimer;
+		bxPos += 96;
+		byPos += 32;
+		curX+=3;
+		curY++;
+		pacerStart ++;
+		dirTimer += 50;
+	}	
+	
 
     setTimeout(function() { tickTimer();}, 1000);
     setTimeout(function(){buffer();}, frameRate);
@@ -417,28 +446,156 @@ window.addEventListener("load", function()
     
     //sets a buffer to redraw the background
     function buffer()
-    {     
-		
-		if(barom.curFrame == 5){
-				barom.curFrame = 0;
-		}
-		else{
-			if(barom.pacer == 10){
-				barom.curFrame++;
-				
-				barom.pacer = 0;
+    {   
+		for(i = 0; i < baroms.count; i++){
+			if(baroms[i].chageDirTimer == 500){
+				baroms[i].chageDirTimer = 0;
+				baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
 			}
 			else{
-			if(barom.xPos == 240 || barom.xPos == 64)
-					barom.curDir = !barom.curDir;
-				if(barom.curDir)
-					barom.xPos++;
-				else
-					barom.xPos--;
-				barom.pacer++;
-			}	
+				baroms[i].chageDirTimer ++;
+			}
+			if(baroms[i].isActive){
 			
+			
+				if(baroms[i].curFrame == 5){
+						baroms[i].curFrame = 0;
+				}
+				else{
+					if(baroms[i].pacer == 10){
+						baroms[i].curFrame++;
+						
+						baroms[i].pacer = 0;
+					}
+					else{
+						baroms[i].pacer++;
+					}	
+				}
+			}
+			else{
+				
+				if(baroms[i].curFrame == 11){
+						//baroms[i].curFrame = 0;
+				}
+				else{
+					if(baroms[i].pacer == 10){
+						baroms[i].curFrame++;
+						
+						baroms[i].pacer = 0;
+					}
+					else{
+						baroms[i].pacer++;
+					}	
+				}
+			}	
+			switch(baroms[i].curDir)
+			{
+				//up 
+				case 1:	
+					if(baroms[i].curDir == 1 && baroms[i].isActive)
+					{
+						baroms[i].yPos --;
+						//if bomberman left the current grid
+						if(baroms[i].curGrid.y * size>= baroms[i].yPos + size/2)
+						{
+							//if the grid moved to is walkable, set curGrid 
+							if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1].walkable)
+								baroms[i].curGrid = grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1];
+							//else undo the move
+							else{
+								baroms[i].yPos ++;
+								baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+							}
+
+						}
+
+					}
+					else
+					{
+						baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+
+					}
+				break;
+				
+				//down 
+				case 2:
+					if(baroms[i].curDir == 2 && baroms[i].isActive)
+					{
+						baroms[i].yPos ++;
+						//if bomberman left the current grid
+						if(baroms[i].curGrid.y * size + size <= baroms[i].yPos + size/2 + size/3)
+						{
+							//if the grid moved to is walkable, set curGrid 
+							if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y+1].walkable)
+								baroms[i].curGrid = grids[baroms[i].curGrid.x][baroms[i].curGrid.y+1];
+							//else undo the move
+							else{
+								baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+								baroms[i].yPos --;
+							}
+								
+						}
+					}
+					else
+					{
+						baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+					}
+					
+				break;
+				
+				//left 
+				case 3:
+					if(baroms[i].curDir == 3 && baroms[i].isActive)
+					{
+						baroms[i].xPos --;
+						//if bomberman left the current grid
+						if(baroms[i].curGrid.x * size >= baroms[i].xPos + size/2)
+						{
+							//if the grid moved to is walkable, set curGrid 
+							if(grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y].walkable)
+								baroms[i].curGrid = grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y];
+							//else undo the move
+							else{
+								baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+								baroms[i].xPos ++;
+							}
+							   
+						}
+					}
+					else
+					{
+						baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+					}
+				break;
+
+				//right 
+				case 4:
+					if(baroms[i].curDir == 4 && baroms[i].isActive)
+					{
+						baroms[i].xPos ++;
+						//if bomberman left the current grid
+						if(baroms[i].curGrid.x * size + size <= baroms[i].xPos + size/2)
+						{
+							//if the grid moved to is walkable, set curGrid 
+							if(grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y].walkable)
+								baroms[i].curGrid = grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y];
+							//else undo the move
+							else{
+								baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+								baroms[i].xPos --;
+							}
+								
+							
+						}
+					}
+					else
+					{
+						baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+					}
+				break;			
+			}
 		}
+		
         ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
         ctx.drawImage(map, map.xPos*size, map.yPos*size, canvas.clientWidth, canvas.clientHeight, 
             0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -492,8 +649,15 @@ window.addEventListener("load", function()
         //modified to take maps position in account
         ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
             size, size, bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
+		baroms[5].isActive = false;
+		
+		baroms[1].isActive = false;
+		baroms[2].isActive = false;
+		for(i = 0; i < baroms.count; i++){
 			
-		ctx.drawImage(barom, barom.curFrame*size, 0,size,size,barom.xPos,barom.yPos,size,size);
+				ctx.drawImage(barom, baroms[i].curFrame*size, 0,size,size,baroms[i].xPos - map.xPos*size,baroms[i].yPos - map.yPos*size,size,size);
+		}
+		
         setTimeout(function() {buffer();}, frameRate);
     }
 });
