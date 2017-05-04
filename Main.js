@@ -63,9 +63,107 @@ window.addEventListener("load", function()
             
         }
     }
+
+
     
+    var bomberman = new Image();
+    bomberman.src = "Art/Bomberman.png";
+    bomberman.xPos = 32;//position on board
+    bomberman.yPos = 32;//position on board
+    bomberman.curFrame = 0;
+    bomberman.curDir = "right";
+    bomberman.walkFrames = {
+        up: [{x: 0, y: 1}, {x: 1, y: 1}, {x: 0, y: 1}, { x: 2, y: 1}],
+        down: [{x: 0, y: 0}, {x: 1, y: 0},{x: 0, y: 0}, { x: 2, y: 0}],
+        right: [{x: 3, y: 0}, {x: 4, y: 0}, {x: 3, y: 0}, { x: 5, y: 0}],
+        left: [{x: 3, y: 1}, {x: 4, y: 1}, {x: 3, y: 1}, { x: 5, y: 1}]
+    };
+    bomberman.curGrid = grids[1][1];
+	
+    var bombs = [];//array of bombs
+    bombs.numBombs = 1;//number of bombs allowed
+    bombs.activeBombs = 0;
+    bombs.maxBombs = 10;//maximum number of bombs
+    var bomb = new Image();//image for bombs
+    bomb.src = "Art/Bomb.png";//image for bombs
+    bombs.animationFrames = [0,1,0,2];//animation frames
+    for(i = 0; i < bombs.maxBombs; i++)
+    {
+        bombs[i] = {};
+        bombs[i].curFrame = 0;//current frame in animation cycle
+        bombs[i].cFrame = 0;//current frame up to frames length
+        bombs[i].xPos = 0;
+        bombs[i].yPos = 0;
+        bombs[i].isActive = false;
+    }
+    bombs.timer = 3000;//time for bomb to explode
+    bombs.numFrames = 8;//number of frames before bomb explodes
+    var explosions = [];//array of explosions
+    explosions.activeExp = 0;
+    var explosion = new Image();
+    explosion.src = "Art/Explosion.png";
+    explosions.range = 2;//range of explosions
+    explosions.animationFrames = [0,1,2,3,3,2,1,0];//animation frames for explosions
+    explosions.timer = 500;//time to explode
+
     function startGame(level)
     {
+
+        ctx.drawImage(bomberman, bomberman.walkFrames.right[bomberman.curFrame].x*size, bomberman.walkFrames.right[bomberman.curFrame].y*size,
+            size, size, bomberman.xPos, bomberman.yPos, size, size);
+    }
+	
+	var barom = new Image();
+	barom.src = "Art/Barom.png";
+    barom.xPos = 96;//position on board
+    barom.yPos = 64;//position on board
+    barom.curFrame = 0;
+    barom.curDir = 1;
+	barom.numFrames = 10;
+	barom.pacer = 0;
+	barom.curGrid = grids[3][2];
+	barom.chageDirTimer = 0;
+	
+	barom.onload = function()
+    {
+        ctx.drawImage(barom, 0, 0,size,size,barom.xPos,barom.yPos,size,size);
+    }
+	
+	var baroms = [];//array of baroms
+	baroms.count = 7;
+	var bxPos = 96;
+	var byPos = 64;
+	var curX = 3;
+	var curY = 2;
+	var pacerStart = 0;
+	var dirTimer = 0;
+	for(i = 0; i < baroms.count; i++){
+		baroms[i] = {};
+		baroms[i].xPos = bxPos;
+		baroms[i].yPos = byPos;
+		baroms[i].isActive = true;
+		baroms[i].curFrame = 0; 
+		baroms[i].curDir = Math.floor((Math.random() * 4) + 1);
+		baroms[i].pacer = pacerStart;
+		baroms[i].curGrid = grids[curX][curY];
+		baroms[i].chageDirTimer = dirTimer;
+		bxPos += 96;
+		byPos += 32;
+		curX+=3;
+		curY++;
+		pacerStart ++;
+		dirTimer += 50;
+	}	
+	
+
+    setTimeout(function() { tickTimer();}, 1000);
+    setTimeout(function(){buffer();}, frameRate);
+
+    //seperate event listener for bomb drops
+    document.addEventListener("keydown", function(e){
+        if(e.keyCode == 32)
+            if(bombs.activeBombs < bombs.numBombs)
+
         //Place soft blocks down around the map
         var softBlocks = [];
         softBlocks.numFrames = 7;//number of frames in an explosion
@@ -79,6 +177,7 @@ window.addEventListener("load", function()
             obj.yPos = y;
             obj.curFrame = 0;//current frame
             obj.explode = function()
+
             {
                 obj.curFrame++;
                 if(obj.curFrame < softBlocks.numFrames)
@@ -657,6 +756,167 @@ window.addEventListener("load", function()
             }       
         }
 
+
+    
+    //sets a buffer to redraw the background
+    function buffer()
+    {   
+		for(i = 0; i < baroms.count; i++){
+			if(baroms[i].chageDirTimer == 500){
+				baroms[i].chageDirTimer = 0;
+				baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+			}
+			else{
+				baroms[i].chageDirTimer ++;
+			}
+			if(baroms[i].isActive){
+			
+			
+				if(baroms[i].curFrame == 5){
+						baroms[i].curFrame = 0;
+				}
+				else{
+					if(baroms[i].pacer == 10){
+						baroms[i].curFrame++;
+						
+						baroms[i].pacer = 0;
+					}
+					else{
+						baroms[i].pacer++;
+					}	
+				}
+			}
+			else{
+				
+				if(baroms[i].curFrame == 11){
+						//baroms[i].curFrame = 0;
+				}
+				else{
+					if(baroms[i].pacer == 10){
+						baroms[i].curFrame++;
+						
+						baroms[i].pacer = 0;
+					}
+					else{
+						baroms[i].pacer++;
+					}	
+				}
+			}	
+			switch(baroms[i].curDir)
+			{
+				//up 
+				case 1:	
+					if(baroms[i].curDir == 1 && baroms[i].isActive)
+					{
+						baroms[i].yPos --;
+						//if bomberman left the current grid
+						if(baroms[i].curGrid.y * size>= baroms[i].yPos + size/2)
+						{
+							//if the grid moved to is walkable, set curGrid 
+							if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1].walkable)
+								baroms[i].curGrid = grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1];
+							//else undo the move
+							else{
+								baroms[i].yPos ++;
+								baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+							}
+
+						}
+
+					}
+					else
+					{
+						baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+
+					}
+				break;
+				
+				//down 
+				case 2:
+					if(baroms[i].curDir == 2 && baroms[i].isActive)
+					{
+						baroms[i].yPos ++;
+						//if bomberman left the current grid
+						if(baroms[i].curGrid.y * size + size <= baroms[i].yPos + size/2 + size/3)
+						{
+							//if the grid moved to is walkable, set curGrid 
+							if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y+1].walkable)
+								baroms[i].curGrid = grids[baroms[i].curGrid.x][baroms[i].curGrid.y+1];
+							//else undo the move
+							else{
+								baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+								baroms[i].yPos --;
+							}
+								
+						}
+					}
+					else
+					{
+						baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+					}
+					
+				break;
+				
+				//left 
+				case 3:
+					if(baroms[i].curDir == 3 && baroms[i].isActive)
+					{
+						baroms[i].xPos --;
+						//if bomberman left the current grid
+						if(baroms[i].curGrid.x * size >= baroms[i].xPos + size/2)
+						{
+							//if the grid moved to is walkable, set curGrid 
+							if(grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y].walkable)
+								baroms[i].curGrid = grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y];
+							//else undo the move
+							else{
+								baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+								baroms[i].xPos ++;
+							}
+							   
+						}
+					}
+					else
+					{
+						baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+					}
+				break;
+
+				//right 
+				case 4:
+					if(baroms[i].curDir == 4 && baroms[i].isActive)
+					{
+						baroms[i].xPos ++;
+						//if bomberman left the current grid
+						if(baroms[i].curGrid.x * size + size <= baroms[i].xPos + size/2)
+						{
+							//if the grid moved to is walkable, set curGrid 
+							if(grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y].walkable)
+								baroms[i].curGrid = grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y];
+							//else undo the move
+							else{
+								baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+								baroms[i].xPos --;
+							}
+								
+							
+						}
+					}
+					else
+					{
+						baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+					}
+				break;			
+			}
+		}
+		
+        ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
+        ctx.drawImage(map, map.xPos*size, map.yPos*size, canvas.clientWidth, canvas.clientHeight, 
+            0, 0, canvas.clientWidth, canvas.clientHeight);
+        
+        var dir;
+        switch(bomberman.curDir)
+
         //for animating explosions
         function animateexplosion(i)
         {
@@ -745,12 +1005,28 @@ window.addEventListener("load", function()
 
             
 
+
+        //modified to take maps position in account
+        ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
+            size, size, bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
+		baroms[5].isActive = false;
+		
+		baroms[1].isActive = false;
+		baroms[2].isActive = false;
+		for(i = 0; i < baroms.count; i++){
+			
+				ctx.drawImage(barom, baroms[i].curFrame*size, 0,size,size,baroms[i].xPos - map.xPos*size,baroms[i].yPos - map.yPos*size,size,size);
+		}
+		
+        setTimeout(function() {buffer();}, frameRate);
+
             
             //modified to take maps position in account
             ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
                 size, size, bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
             setTimeout(function() {buffer();}, frameRate);
         }
+
     }
 
     startGame(1);
