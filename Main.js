@@ -151,23 +151,7 @@ window.addEventListener("load", function()
         var curY = 2;
         var pacerStart = 0;
         var dirTimer = 0;
-        for(i = 0; i < baroms.count; i++){
-            baroms[i] = {};
-            baroms[i].xPos = bxPos;
-            baroms[i].yPos = byPos;
-            baroms[i].isActive = true;
-            baroms[i].curFrame = 0; 
-            baroms[i].curDir = Math.floor((Math.random() * 4) + 1);
-            baroms[i].pacer = pacerStart;
-            baroms[i].curGrid = grids[curX][curY];
-            baroms[i].chageDirTimer = dirTimer;
-            bxPos += 96;
-            byPos += 32;
-            curX+=3;
-            curY++;
-            pacerStart ++;
-            dirTimer += 50;
-        }	
+        
 
         //Place soft blocks down around the map
         var softBlocks = [];
@@ -202,6 +186,24 @@ window.addEventListener("load", function()
 
             //Call setSoftBlocks function
             setSoftBlocks(numBlocks); 
+			
+			for(i = 0; i < baroms.count; i++){
+				baroms[i] = {};
+				baroms[i].xPos = bxPos;
+				baroms[i].yPos = byPos;
+				baroms[i].isActive = true;
+				baroms[i].curFrame = 0; 
+				baroms[i].curDir = Math.floor((Math.random() * 4) + 1);
+				baroms[i].pacer = pacerStart;
+				baroms[i].curGrid = grids[curX][curY];
+				baroms[i].chageDirTimer = dirTimer;
+				bxPos += 96;
+				byPos += 32;
+				curX+=3;
+				curY++;
+				pacerStart ++;
+				dirTimer += 50;
+			}	
             //Takes the number of softBlocks to be placed on the map randomly
             function setSoftBlocks(numSB) 
             {   
@@ -888,7 +890,10 @@ window.addEventListener("load", function()
                                 baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
                             }
                         break;			
-                }
+					}
+				}
+				
+				
 
                 var dir;
                 switch(bomberman.curDir)
@@ -942,12 +947,12 @@ window.addEventListener("load", function()
                     if(baroms[i].isActive)
                         ctx.drawImage(barom, baroms[i].curFrame*size, 0,size,size,baroms[i].xPos - map.xPos*size,baroms[i].yPos - map.yPos*size,size,size);
                 }
-                
+                console.log(baroms.count);
                 setTimeout(function() {buffer();}, frameRate);
 
             }
-        }
     }
+    
     startGame(1);
     
 });
