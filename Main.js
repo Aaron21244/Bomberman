@@ -204,6 +204,51 @@ window.addEventListener("load", function()
 				pacerStart ++;
 				dirTimer += 50;
 			}	
+			
+			setBaroms();
+			
+			function setBaroms() 
+            {   
+                var min = 1;
+                var bufZone = 2;
+                for (let i = 0; i < baroms.count; i++)
+                {
+                    var xCord = getRandomIntInclusive(min, mapX-1);
+                    var yCord = getRandomIntInclusive(min, mapY-2);
+                    while (xCord <= bufZone && yCord <= bufZone)
+                    {
+                        var rNum = getRandomIntInclusive(1, 2);
+                        if (rNum == 1) 
+                        {
+                            xCord = getRandomIntInclusive(min, mapX-1);
+                        }
+                        else 
+                        {
+                            yCord = getRandomIntInclusive(min, mapY-2);
+                        }
+                    }
+                    while (grids[xCord][yCord].walkable == false) {
+                        xCord = getRandomIntInclusive(min, mapX-1);
+                        yCord = getRandomIntInclusive(min, mapY-1);
+                        while (xCord <= bufZone && yCord <= bufZone)
+                        {
+                            var rNum = getRandomIntInclusive(1, 2);
+                            if (rNum == 1) 
+                            {
+                                xCord = getRandomIntInclusive(min, mapX-1);
+                            }
+                            else 
+                            {
+                                yCord = getRandomIntInclusive(min, mapY-1);
+                            }
+                        }
+                    }
+					baroms[i].xPos = xCord*size;
+					baroms[i].yPos = yCord*size;
+					baroms[i].curGrid = grids[xCord][yCord];
+                }
+            };
+			
             //Takes the number of softBlocks to be placed on the map randomly
             function setSoftBlocks(numSB) 
             {   
