@@ -745,14 +745,13 @@ window.addEventListener("load", function()
                             softBlocks[i].xPos - map.xPos*size, softBlocks[i].yPos - map.yPos*size, size, size);
                 }
 
-
                 for(i = 0; i < baroms.count; i++){
-                    if(baroms[i].chageDirTimer == 500){
-                        baroms[i].chageDirTimer = 0;
-                        baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
-                    }
-                    else{
-                        baroms[i].chageDirTimer ++;
+                    if(baroms[i].xPos == baroms[i].curGrid.x*size && baroms[i].yPos == baroms[i].curGrid.y*size){
+                        //baroms[i].chageDirTimer = 0;
+						if(Math.floor((Math.random() * 10) + 1) == 5){
+							baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
+						}
+						
                     }
                     if(baroms[i].isActive){              
                         if(baroms[i].curFrame == 5){
@@ -793,11 +792,13 @@ window.addEventListener("load", function()
                             {
                                 baroms[i].yPos --;
                                 //if bomberman left the current grid
-                                if(baroms[i].curGrid.y * size>= baroms[i].yPos + size/2)
+                                if(baroms[i].curGrid.y * size-1 >= baroms[i].yPos)
                                 {
                                     //if the grid moved to is walkable, set curGrid 
-                                    if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1].walkable)
-                                        baroms[i].curGrid = grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1];
+                                    if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1].walkable){
+										baroms[i].curGrid = grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1];
+										
+									}
                                     //else undo the move
                                     else{
                                         baroms[i].yPos ++;
@@ -805,11 +806,6 @@ window.addEventListener("load", function()
                                     }
 
                                 }
-
-                            }
-                            else
-                            {
-                                baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
 
                             }
                         break;
@@ -820,11 +816,12 @@ window.addEventListener("load", function()
                             {
                                 baroms[i].yPos ++;
                                 //if bomberman left the current grid
-                                if(baroms[i].curGrid.y * size + size <= baroms[i].yPos + size/2 + size/3)
+                                if(baroms[i].curGrid.y * size + size+1 <= baroms[i].yPos + size)
                                 {
                                     //if the grid moved to is walkable, set curGrid 
-                                    if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y+1].walkable)
-                                        baroms[i].curGrid = grids[baroms[i].curGrid.x][baroms[i].curGrid.y+1];
+                                    if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y+1].walkable){
+										baroms[i].curGrid = grids[baroms[i].curGrid.x][baroms[i].curGrid.y+1];
+									} 
                                     //else undo the move
                                     else{
                                         baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
@@ -832,10 +829,6 @@ window.addEventListener("load", function()
                                     }
                                         
                                 }
-                            }
-                            else
-                            {
-                                baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
                             }
                             
                         break;
@@ -846,22 +839,19 @@ window.addEventListener("load", function()
                             {
                                 baroms[i].xPos --;
                                 //if bomberman left the current grid
-                                if(baroms[i].curGrid.x * size >= baroms[i].xPos + size/2)
+                                if(baroms[i].curGrid.x * size - 1 >= baroms[i].xPos)
                                 {
                                     //if the grid moved to is walkable, set curGrid 
-                                    if(grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y].walkable)
-                                        baroms[i].curGrid = grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y];
+                                    if(grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y].walkable){
+										baroms[i].curGrid = grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y];
+
+									}
                                     //else undo the move
                                     else{
                                         baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
                                         baroms[i].xPos ++;
-                                    }
-                                    
+                                    }       
                                 }
-                            }
-                            else
-                            {
-                                baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
                             }
                         break;
 
@@ -871,23 +861,18 @@ window.addEventListener("load", function()
                             {
                                 baroms[i].xPos ++;
                                 //if bomberman left the current grid
-                                if(baroms[i].curGrid.x * size + size <= baroms[i].xPos + size/2)
+                                if(baroms[i].curGrid.x * size + 1  <= baroms[i].xPos)
                                 {
                                     //if the grid moved to is walkable, set curGrid 
-                                    if(grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y].walkable)
-                                        baroms[i].curGrid = grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y];
+                                    if(grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y].walkable){
+										baroms[i].curGrid = grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y];
+                                    }
                                     //else undo the move
                                     else{
                                         baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
                                         baroms[i].xPos --;
                                     }
-                                        
-                                    
                                 }
-                            }
-                            else
-                            {
-                                baroms[i].curDir = Math.floor((Math.random() * 4) + 1); 
                             }
                         break;			
 					}
@@ -936,7 +921,6 @@ window.addEventListener("load", function()
                             if(explosions[i].down[j])
                                 ctx.drawImage(explosion, explosions[i].down[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].down[j].xPos - map.xPos*size, explosions[i].down[j].yPos - map.yPos*size, size, size);
-
                         }
                     }
                         
@@ -947,12 +931,9 @@ window.addEventListener("load", function()
                     if(baroms[i].isActive)
                         ctx.drawImage(barom, baroms[i].curFrame*size, 0,size,size,baroms[i].xPos - map.xPos*size,baroms[i].yPos - map.yPos*size,size,size);
                 }
-                console.log(baroms.count);
                 setTimeout(function() {buffer();}, frameRate);
-
             }
     }
-    
     startGame(1);
     
 });
