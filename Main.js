@@ -7,7 +7,7 @@ window.addEventListener("load", function()
     //size of map height 
     var mapY = 13;
 
-    var lastFire = new Date().getTime(); //used to slow down the keypresses
+    var deathTime;//used to animate death of bomberman 
     
     //gets the canvas
     var canvas = document.getElementById("canvas");
@@ -26,6 +26,8 @@ window.addEventListener("load", function()
 
     //grids corresponding to the map
     var grids = new Array(mapX);
+	
+	var gameOver = false;
 
     //create array of arrays (2d array)
     for (var i = 0; i < mapX; i++) {    
@@ -33,7 +35,6 @@ window.addEventListener("load", function()
     }
 
     //grid class
-
     var Grid = function(walkable,x,y,hasBlock)
     {   
         this.walkable = walkable;
@@ -67,7 +68,6 @@ window.addEventListener("load", function()
 
     function startGame(level)
     {
-       
         //loads the map
         var map = new Image();
         map.src = "Art/Map.png";
@@ -85,6 +85,8 @@ window.addEventListener("load", function()
         bomberman.yPos = 32;//position on board
         bomberman.curFrame = 0;
         bomberman.curDir = "right";
+        bomberman.lastMove = 0; //used to time movements
+        bomberman.still = true; //standing still
         bomberman.walkFrames = {
             up: [{x: 0, y: 1}, {x: 1, y: 1}, {x: 0, y: 1}, { x: 2, y: 1}],
             down: [{x: 0, y: 0}, {x: 1, y: 0},{x: 0, y: 0}, { x: 2, y: 0}],
@@ -92,6 +94,7 @@ window.addEventListener("load", function()
             left: [{x: 3, y: 1}, {x: 4, y: 1}, {x: 3, y: 1}, { x: 5, y: 1}]
         };
         bomberman.curGrid = grids[1][1];
+        bomberman.isAlive = true;
 
         var bombs = [];//array of bombs
         bombs.numBombs = 1;//number of bombs allowed
@@ -124,19 +127,16 @@ window.addEventListener("load", function()
             ctx.drawImage(bomberman, bomberman.walkFrames.right[bomberman.curFrame].x*size, bomberman.walkFrames.right[bomberman.curFrame].y*size,
                 size, size, bomberman.xPos, bomberman.yPos, size, size);
         }
-        
-    
-        
+               
         var barom = new Image();
         barom.src = "Art/Barom.png";
-        barom.xPos = 96;//position on board
-        barom.yPos = 64;//position on board
         barom.curFrame = 0;
         barom.curDir = 1;
         barom.numFrames = 10;
         barom.pacer = 0;
         barom.curGrid = grids[3][2];
         barom.chageDirTimer = 0;
+        
         
         barom.onload = function()
         {
@@ -145,12 +145,53 @@ window.addEventListener("load", function()
         
         var baroms = [];//array of baroms
         baroms.count = 7;
-        var bxPos = 96;
-        var byPos = 64;
         var curX = 3;
         var curY = 2;
         var pacerStart = 0;
         var dirTimer = 0;
+			
+			
+        function setBaroms() 
+        {   
+            var min = 1;
+            var bufZone = 2;
+            for (let i = 0; i < baroms.count; i++)
+            {
+                var xCord = getRandomIntInclusive(min, mapX-1);
+                var yCord = getRandomIntInclusive(min, mapY-2);
+                while (xCord <= bufZone && yCord <= bufZone)
+                {
+                    var rNum = getRandomIntInclusive(1, 2);
+                    if (rNum == 1) 
+                    {
+                        xCord = getRandomIntInclusive(min, mapX-1);
+                    }
+                    else 
+                    {
+                        yCord = getRandomIntInclusive(min, mapY-2);
+                    }
+                }
+                while (grids[xCord][yCord].walkable == false) {
+                    xCord = getRandomIntInclusive(min, mapX-1);
+                    yCord = getRandomIntInclusive(min, mapY-1);
+                    while (xCord <= bufZone && yCord <= bufZone)
+                    {
+                        var rNum = getRandomIntInclusive(1, 2);
+                        if (rNum == 1) 
+                        {
+                            xCord = getRandomIntInclusive(min, mapX-1);
+                        }
+                        else 
+                        {
+                            yCord = getRandomIntInclusive(min, mapY-1);
+                        }
+                    }
+                }
+                baroms[i].xPos = xCord*size;
+                baroms[i].yPos = yCord*size;
+                baroms[i].curGrid = grids[xCord][yCord];
+            }
+        };
         
 
         //Place soft blocks down around the map
@@ -186,31 +227,32 @@ window.addEventListener("load", function()
 
             //Call setSoftBlocks function
             setSoftBlocks(numBlocks); 
+
 			
 			for(i = 0; i < baroms.count; i++){
 				baroms[i] = {};
-				baroms[i].xPos = bxPos;
-				baroms[i].yPos = byPos;
 				baroms[i].isActive = true;
 				baroms[i].curFrame = 0; 
 				baroms[i].curDir = Math.floor((Math.random() * 4) + 1);
 				baroms[i].pacer = pacerStart;
-				baroms[i].curGrid = grids[curX][curY];
 				baroms[i].chageDirTimer = dirTimer;
-				bxPos += 96;
-				byPos += 32;
+                baroms[i].deathTime = 0;
 				curX+=3;
 				curY++;
 				pacerStart ++;
 				dirTimer += 50;
 			}	
+
+
+            setBaroms();
+
             //Takes the number of softBlocks to be placed on the map randomly
             function setSoftBlocks(numSB) 
             {   
                 //Min zone around the player to place blocks
                 var min = 1;
                 //Buffer zone around the player(Cord 1,1 for now, THIS DOESNT TAKE INTO ACCOUNT PLYER STRT POS CHANGE) in a square formation
-                var bufZone = 2;
+                var bufZone = 4;
                 for (let i = 0; i < numSB; i++)
                 {
                     //Obtain random x and y cords to place the soft block
@@ -277,24 +319,37 @@ window.addEventListener("load", function()
         
             function tickTimer()
             {
-                if(parseInt(timer.textContent) > 0)
-                {
-                    timer.textContent = parseInt(timer.textContent) - 1;
-                    setTimeout(function() { tickTimer();}, 1000);
-                }
-                else
-                {
-                    if(lives.textContent > 0)
-                    {
-                        lives.textContent = (lives.textContent - 1);
-                        timer.textContent = 200;
-                        startGame(level);
-                    }
-                    else
-                        console.log("Game Over!");
-                }
+				if(parseInt(timer.textContent) > 0)
+				{
+					timer.textContent = parseInt(timer.textContent) - 1;
+					setTimeout(function() { tickTimer();}, 1000);
+				}
+				else
+				{
+					if(lives.textContent > 0)
+					{
+						lives.textContent = (lives.textContent - 1);
+						timer.textContent = 200;
+						startGame(level);
+					}
+					else
+						bombermanDeath();
+				}
             }
 
+
+            function bombermanDeath()
+            {
+                bomberman.isAlive = false;
+                bomberman.curFrame = 0;
+                deathTime = new Date().getTime();
+                if(lives.textContent > 0)
+                {
+                    lives.textContent = (lives.textContent - 1);
+                }
+                else
+                    console.log("Game Over!");
+            }
 
              //adds the powerup
             var powerUp = new Image();
@@ -319,7 +374,7 @@ window.addEventListener("load", function()
             
            
 
-            setTimeout(function() { tickTimer();}, 1000);
+            setTimeout(function() {tickTimer();}, 1000);
             setTimeout(function(){buffer();}, frameRate);
 
             //seperate event listener for bomb drops
@@ -352,114 +407,38 @@ window.addEventListener("load", function()
 
             document.onkeydown = function(e)
             {
-                //ignore button presses that occur within 40 ms
-                var curFire = new Date().getTime();
-                if(curFire - lastFire < 40)
+                
+                if(bomberman.isAlive)
                 {
-                    return;
-                }
-                lastFire = curFire;
-                switch(e.keyCode)
-                {
-                    //up arrow
-                    case 38:	
-                        if(bomberman.curDir == "up")
-                        {
-                            bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.up.length;
-                            bomberman.yPos -= size/bomberman.walkFrames.up.length;
-                            //if bomberman left the current grid
-                            if(bomberman.curGrid.y * size>= bomberman.yPos + size/2)
-                            {
-                                //if the grid moved to is walkable, set curGrid 
-                                if(grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable)
-                                    bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y-1];
-                                //else undo the move
-                                else
-                                    bomberman.yPos += size/bomberman.walkFrames.up.length;
-                            }
-
-                        }
-                        else
-                        {
-                            bomberman.curDir = "up";
-                            bomberman.curFrame = 0;
-                        }
-                    break;
-                    
-                    //down arrow
-                    case 40:
-                        if(bomberman.curDir == "down")
-                        {
-                            bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.down.length;
-                            bomberman.yPos += size/bomberman.walkFrames.down.length;
-                            //if bomberman left the current grid
-                            if(bomberman.curGrid.y * size + size <= bomberman.yPos + size/2 + size/3)
-                            {
-                                //if the grid moved to is walkable, set curGrid 
-                                if(grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable)
-                                    bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y+1];
-                                //else undo the move
-                                else
-                                    bomberman.yPos -= size/bomberman.walkFrames.up.length;
-                            }
-                        }
-                        else
-                        {
-                            bomberman.curDir = "down";
-                            bomberman.curFrame = 0;
-                        }
-                        
-                    break;
-                    
-                    //left arrow
-                    case 37:
-                        if(bomberman.curDir == "left")
-                        {
-                            bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.left.length;
-                            bomberman.xPos -= size/bomberman.walkFrames.left.length;
-                            //if bomberman left the current grid
-                            if(bomberman.curGrid.x * size >= bomberman.xPos + size/2)
-                            {
-                                //if the grid moved to is walkable, set curGrid 
-                                if(grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable)
-                                    bomberman.curGrid = grids[bomberman.curGrid.x-1][bomberman.curGrid.y];
-                                //else undo the move
-                                else
-                                    bomberman.xPos += size/bomberman.walkFrames.left.length;
-                            }
-                        }
-                        else
-                        {
+                    switch(e.which)
+                    {
+                        case 37: //left
+                            if(bomberman.curDir != "left")
+                                bomberman.curFrame = 0;
                             bomberman.curDir = "left";
-                            bomberman.curFrame = 0;
-                        }
-                    break;
-
-                    //right arrow
-                    case 39:
-                        if(bomberman.curDir == "right")
-                        {
-                            bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.right.length;
-                            bomberman.xPos += size/bomberman.walkFrames.right.length;
-                            //if bomberman left the current grid
-                            if(bomberman.curGrid.x * size + size <= bomberman.xPos + size/2)
-                            {
-                                //if the grid moved to is walkable, set curGrid 
-                                if(grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable)
-                                    bomberman.curGrid = grids[bomberman.curGrid.x+1][bomberman.curGrid.y];
-                                //else undo the move
-                                else
-                                    bomberman.xPos -= size/bomberman.walkFrames.left.length;
-                                
-                            }
-                        }
-                        else
-                        {
+                            bomberman.still = false;
+                            break;
+                        case 38: //up
+                            if(bomberman.curDir != "up")
+                                bomberman.curFrame = 0;
+                            bomberman.curDir = "up";
+                            bomberman.still = false;
+                            break;
+                        case 39: //right
+                            if(bomberman.curDir != "right")
+                                bomberman.curFrame = 0;
                             bomberman.curDir = "right";
-                            bomberman.curFrame = 0;
-                        }
-                    break;			
+                            bomberman.still = false;
+                            break;
+                        case 40: //down
+                            if(bomberman.curDir != "down")
+                                bomberman.curFrame = 0;
+                            bomberman.curDir = "down";
+                            bomberman.still = false;
+                            break;
+                    }
                 }
+                
                 //gets previously map position
                 var prevPos = map.xPos;
                 map.xPos = bomberman.xPos/size - canvas.clientWidth / size / 2 + 1;
@@ -474,6 +453,23 @@ window.addEventListener("load", function()
                 checkPosition();
             };
 
+            document.onkeyup = function(e)
+            {
+                if(bomberman.isAlive)
+                {
+                    switch(e.which)
+                    {
+                        case 37: //left
+                        case 38: //up
+                        case 39: //right
+                        case 40: //down
+                            bomberman.still = true;
+                            break;
+                    }
+                }
+
+            }
+
             function checkPosition()
             {
                 //found powerup
@@ -485,6 +481,19 @@ window.addEventListener("load", function()
                 if(bomberman.xPos+size-1 >= targetDoor.xPos && bomberman.xPos-size+1 <= targetDoor.xPos &&
                     bomberman.yPos+size-1 >= targetDoor.yPos && bomberman.yPos-size+1 <= targetDoor.yPos)
                         startGame(level+1);
+						
+				//hit enemy
+                for(let k = 0; k < baroms.length; k++)
+                {
+                    if(baroms[k].curGrid == grids[bombs[i].xPos/size][bombs[i].yPos/size])
+                    {
+                        baroms[k].isActive = false;
+                        baroms[k].curFrame = 0;
+                        baroms[k].deathTime = new Date().getTime();
+                    }
+                }
+                //if(bomberman.curGrid === grids[bombs[i].xPos/size][bombs[i].yPos/size])
+                 //   bombermanDeath();
             }
 
             function usePowerUp()
@@ -533,9 +542,11 @@ window.addEventListener("load", function()
                             {
                                 if(!lblock)
                                 {
-                                    if((grids[(bombs[i].xPos-(size*(j+1)))/size][(bombs[i].yPos)/size].walkable))
-                                        explosions[explosions.activeExp].left[j] = {xPos: bombs[i].xPos-(size*(j+1)),
-                                            yPos: bombs[i].yPos, animPos: 6};
+                                    if((grids[(bombs[i].xPos-(size*(j+1)))/size][(bombs[i].yPos)/size].walkable))  
+                                    {
+                                            explosions[explosions.activeExp].left[j] = {xPos: bombs[i].xPos-(size*(j+1)),
+                                                yPos: bombs[i].yPos, animPos: 6};
+                                    }
                                     else
                                     {
                                         //if the current block is a brick
@@ -556,8 +567,11 @@ window.addEventListener("load", function()
                                 if(!ublock)
                                 {
                                     if(grids[(bombs[i].xPos)/size][(bombs[i].yPos-(size*(j+1)))/size].walkable)
+                                    {
+
                                         explosions[explosions.activeExp].up[j] = {xPos: bombs[i].xPos,
-                                            yPos: bombs[i].yPos-(size*(j+1)), animPos: 5};
+                                            yPos: bombs[i].yPos-(size*(j+1)), animPos: 5};                    
+                                    }                   
                                     else
                                     {
                                         if(grids[(bombs[i].xPos)/size][(bombs[i].yPos-(size*(j+1)))/size].hasBlock)
@@ -577,8 +591,11 @@ window.addEventListener("load", function()
                                 if(!rblock)
                                 {
                                     if(grids[(bombs[i].xPos+(size*(j+1)))/size][(bombs[i].yPos)/size].walkable)
+                                    {
+
                                         explosions[explosions.activeExp].right[j] = {xPos: bombs[i].xPos+(size*(j+1)),
                                             yPos: bombs[i].yPos, animPos: 6};
+                                    }
                                     else
                                     {
                                         if(grids[(bombs[i].xPos+(size*(j+1)))/size][(bombs[i].yPos)/size].hasBlock)
@@ -598,8 +615,10 @@ window.addEventListener("load", function()
                                 if(!dblock)
                                 {
                                     if(grids[(bombs[i].xPos)/size][(bombs[i].yPos+(size*(j+1)))/size].walkable)
+                                    {   
                                         explosions[explosions.activeExp].down[j] = {xPos: bombs[i].xPos,
                                             yPos: bombs[i].yPos+(size*(j+1)), animPos: 5};
+                                    }
                                     else
                                     {
                                         if(grids[(bombs[i].xPos)/size][(bombs[i].yPos+(size*(j+1)))/size].hasBlock)
@@ -620,7 +639,7 @@ window.addEventListener("load", function()
                             }
                         }
                         
-                        if(grids[(bombs[i].xPos-size)/size][(bombs[i].yPos)/size].walkable )
+                        if(grids[(bombs[i].xPos-size)/size][(bombs[i].yPos)/size].walkable)
                         {
                             explosions[explosions.activeExp].left[explosions[explosions.activeExp].left.length] = 
                                 {xPos: bombs[i].xPos-size, yPos: bombs[i].yPos, animPos: 1};
@@ -630,6 +649,7 @@ window.addEventListener("load", function()
                         {
                             explosions[explosions.activeExp].left[explosions[explosions.activeExp].left.length] = 
                                 {xPos: bombs[i].xPos-size, yPos: bombs[i].yPos, animPos: 1};
+                            
                             for(var k = 0; k < softBlocks.length; k++)
                                 if(softBlocks[k].xPos == bombs[i].xPos-size && softBlocks[k].yPos == bombs[i].yPos)
                                 {
@@ -702,7 +722,7 @@ window.addEventListener("load", function()
                                 blocksToExplode[i].explode();
                             }, 450);
                     }
-                }       
+                } 
             }
 
             //for animating explosions
@@ -718,6 +738,96 @@ window.addEventListener("load", function()
                     explosions[i].isActive = false;
                     explosions.activeExp--;
                 }
+            }
+
+
+            function reset()
+            {
+                curPowerUp = (level-1)%powerUp.numPowerUps;
+                explosions.range = 1;
+                powerUp.isActive = true;
+                for(let i = 0; i < bombs.maxBombs; i++)
+                {
+                    bombs[i].isActive = false;
+                    bombs[i].curFrame = 0;//current frame in animation cycle
+                    bombs[i].cFrame = 0;//current frame up to frames length
+                    bombs[i].xPos = 0;
+                    bombs[i].yPos = 0;              
+                }
+                bombs.activeBombs = 0;
+                for(let i = 0; i < explosions.length; i++)
+                    explosions[i].isActive = false;
+                explosions.activeExp = 0;
+                timer.textContent = 200;
+                bomberman.still = true;
+                bomberman.isAlive = true;
+                bomberman.curFrame = 0;
+                bomberman.curDir = "right";
+                bomberman.xPos = 32;
+                bomberman.yPos = 32;
+                bomberman.curGrid = grids[1][1];
+                bombs.activeBombs = 0;
+                for(let i = 0; i < mapX; i++)
+                {
+                    for(let j = 0; j < mapY; j++)
+                    {
+                        if(j == 0 || j == mapY-1 || i == 0 || i == mapX-1)
+                            grids[i][j].walkable = false;
+                        else if (i % 2 == 0)
+                        {
+                            if(j % 2 == 0)
+                            {
+                                grids[i][j].hasBlock = false;
+                                grids[i][j].walkable = false;
+                            }
+                            else
+                            {
+                                grids[i][j].walkable = true;
+                                grids[i][j].hasBlock = false;
+                            }
+                        }
+                        else
+                        {
+                            grids[i][j].walkable = true;
+                            grids[i][j].hasBlock = false;
+                        }
+                        
+                    }
+                }
+                bxPos = 96;
+                byPos = 64;
+                curX = 3;
+                curY = 2;
+                for(i = 0; i < baroms.count; i++){
+                    baroms[i] = {};
+                    baroms[i].xPos = bxPos;
+                    baroms[i].yPos = byPos;
+                    baroms[i].isActive = true;
+                    baroms[i].curFrame = 0; 
+                    baroms[i].curDir = Math.floor((Math.random() * 4) + 1);
+                    baroms[i].pacer = pacerStart;
+                    baroms[i].curGrid = grids[curX][curY];
+                    baroms[i].chageDirTimer = dirTimer;
+                    bxPos += 96;
+                    byPos += 32;
+                    curX+=3;
+                    curY++;
+                    pacerStart ++;
+                    dirTimer += 50;
+			    }	
+                setSoftBlocks(numBlocks);
+                powerUp.numPowerUps = 8;
+                powerUp.curPowerUp = (level-1)%powerUp.numPowerUps;
+                powerUp.blockIndex = getRandomIntInclusive(0, softBlocks.length-1);
+                powerUp.xPos = softBlocks[powerUp.blockIndex].xPos;
+                powerUp.yPos = softBlocks[powerUp.blockIndex].yPos;
+                //console.log(powerUp.xPos + ", " + powerUp.yPos);
+                powerUp.isActive = true;
+                targetDoor.blockIndex = getRandomIntInclusive(0, softBlocks.length-1); 
+                while(targetDoor.blockIndex == powerUp.blockIndex)
+                    targetDoor.blockIndex = getRandomIntInclusive(0, softBlocks.length-1);
+                targetDoor.xPos = softBlocks[targetDoor.blockIndex].xPos;
+                targetDoor.yPos = softBlocks[targetDoor.blockIndex].yPos;
             }
             
             //sets a buffer to redraw the background
@@ -893,7 +1003,232 @@ window.addEventListener("load", function()
 					}
 				}
 				
+
+                
+                for(let i = 0; i < baroms.length; i++)
+                {
+                    if(baroms[i].curGrid == bomberman.curGrid && bomberman.isAlive && baroms[i].isActive)
+                    {
+                        bombermanDeath();
+                    }
+                }
 				
+
+                var curMove = new Date().getTime();
+                if(curMove - bomberman.lastMove >= 60 && bomberman.isAlive)
+                {
+                    if(!bomberman.still)
+                    {
+                        bomberman.lastMove = curMove;
+                        if(bomberman.curDir == "up")
+                        {
+                            bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.up.length;
+                            if(bomberman.xPos === bomberman.curGrid.x*size && (grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable || bomberman.yPos !== bomberman.curGrid.y*size))
+                            {
+                                bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                                //if bomberman left the current grid
+                                if(bomberman.curGrid.y * size>= bomberman.yPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y-1];
+                                    //else undo the move
+                                    else
+                                        bomberman.yPos += size/bomberman.walkFrames.up.length;
+                                }
+                            }
+                            else if(bomberman.xPos > bomberman.curGrid.x*size && grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable )
+                            {
+                                console.log("center in square");
+                                bomberman.xPos -= size/bomberman.walkFrames.up.length;
+                                bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                                if(bomberman.curGrid.y * size>= bomberman.yPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y-1];
+                                    //else undo the move
+                                    else
+                                        bomberman.yPos += size/bomberman.walkFrames.up.length;
+                                }
+                            }
+                            else if(bomberman.xPos < bomberman.curGrid.x*size && grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable )
+                            {
+                                console.log("center in square");
+                                bomberman.xPos += size/bomberman.walkFrames.up.length;
+                                bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                                if(bomberman.curGrid.y * size>= bomberman.yPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x][bomberman.curGrid.y-1].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y-1];
+                                    //else undo the move
+                                    else
+                                        bomberman.yPos += size/bomberman.walkFrames.up.length;
+                                }
+                            }
+                        }
+                        else if(bomberman.curDir == "down")
+                        {
+                            bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.down.length;
+                            if(bomberman.xPos === bomberman.curGrid.x*size && (grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable || bomberman.yPos !== bomberman.curGrid.y*size))
+                            {
+                                bomberman.yPos += size/bomberman.walkFrames.down.length;
+                                //if bomberman left the current grid
+                                if(bomberman.curGrid.y * size + size <= bomberman.yPos + size/2 + size/3)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y+1];
+                                    //else undo the move
+                                    else
+                                        bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                                }
+                            }
+                            else if(bomberman.xPos > bomberman.curGrid.x*size && grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable )
+                            {
+                                console.log("center in square");
+                                bomberman.xPos -= size/bomberman.walkFrames.up.length;
+                                bomberman.yPos += size/bomberman.walkFrames.up.length;
+                                if(bomberman.curGrid.y * size + size <= bomberman.yPos + size/2 + size/3)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y+1];
+                                    //else undo the move
+                                    else
+                                        bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                                }
+                            }
+                            else if(bomberman.xPos < bomberman.curGrid.x*size && grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable )
+                            {
+                                console.log("center in square");
+                                bomberman.xPos += size/bomberman.walkFrames.up.length;
+                                bomberman.yPos += size/bomberman.walkFrames.up.length;
+                                if(bomberman.curGrid.y * size + size <= bomberman.yPos + size/2 + size/3)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x][bomberman.curGrid.y+1].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x][bomberman.curGrid.y+1];
+                                    //else undo the move
+                                    else
+                                        bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                                }
+                            }
+                        }
+                        else if(bomberman.curDir == "left")
+                        {
+                            bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.left.length;
+                            if(bomberman.yPos === bomberman.curGrid.y*size && (grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable || bomberman.xPos !== bomberman.curGrid.x*size))
+                            {
+                                bomberman.xPos -= size/bomberman.walkFrames.left.length;
+                                //if bomberman left the current grid
+                                if(bomberman.curGrid.x * size >= bomberman.xPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x-1][bomberman.curGrid.y];
+                                    //else undo the move
+                                    else
+                                        bomberman.xPos += size/bomberman.walkFrames.left.length;
+                                }
+                            }
+                            else if(bomberman.yPos > bomberman.curGrid.y*size && grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable )
+                            {
+                                console.log("center in square");
+                                bomberman.xPos -= size/bomberman.walkFrames.left.length;
+                                bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                                if(bomberman.curGrid.x * size >= bomberman.xPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x-1][bomberman.curGrid.y];
+                                    //else undo the move
+                                    else
+                                        bomberman.xPos += size/bomberman.walkFrames.left.length;
+                                }
+                            }
+                            else if(bomberman.yPos < bomberman.curGrid.y*size && grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable )
+                            {
+                                console.log("center in square");
+                                bomberman.xPos -= size/bomberman.walkFrames.left.length;
+                                bomberman.yPos += size/bomberman.walkFrames.up.length;
+                                if(bomberman.curGrid.x * size >= bomberman.xPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x-1][bomberman.curGrid.y].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x-1][bomberman.curGrid.y];
+                                    //else undo the move
+                                    else
+                                        bomberman.xPos += size/bomberman.walkFrames.left.length;
+                                }
+                            }
+                        }
+                        else if(bomberman.curDir == "right")
+                        {
+                            bomberman.curFrame = (bomberman.curFrame + 1) % bomberman.walkFrames.right.length;
+                            if(bomberman.yPos === bomberman.curGrid.y*size && (grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable || bomberman.xPos !== bomberman.curGrid.x*size))
+                            {
+                                bomberman.xPos += size/bomberman.walkFrames.right.length;
+                                //if bomberman left the current grid
+                                if(bomberman.curGrid.x * size + size <= bomberman.xPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x+1][bomberman.curGrid.y];
+                                    //else undo the move
+                                    else
+                                        bomberman.xPos -= size/bomberman.walkFrames.left.length;
+                                    
+                                }
+                            }
+                            else if(bomberman.yPos > bomberman.curGrid.y*size && grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable )
+                            {
+                                console.log("center in square");
+                                bomberman.xPos += size/bomberman.walkFrames.left.length;
+                                bomberman.yPos -= size/bomberman.walkFrames.up.length;
+                                if(bomberman.curGrid.x * size + size <= bomberman.xPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x+1][bomberman.curGrid.y];
+                                    //else undo the move
+                                    else
+                                        bomberman.xPos -= size/bomberman.walkFrames.left.length;
+                                    
+                                }
+                            }
+                            else if(bomberman.yPos < bomberman.curGrid.y*size && grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable )
+                            {
+                                console.log("center in square");
+                                bomberman.xPos += size/bomberman.walkFrames.left.length;
+                                bomberman.yPos += size/bomberman.walkFrames.up.length;
+                                if(bomberman.curGrid.x * size + size <= bomberman.xPos + size/2)
+                                {
+                                    //if the grid moved to is walkable, set curGrid 
+                                    if(grids[bomberman.curGrid.x+1][bomberman.curGrid.y].walkable)
+                                        bomberman.curGrid = grids[bomberman.curGrid.x+1][bomberman.curGrid.y];
+                                    //else undo the move
+                                    else
+                                        bomberman.xPos -= size/bomberman.walkFrames.left.length;
+                                    
+                                }
+                            }
+                        }
+                    }
+                    //gets previously map position
+                    var prevPos = map.xPos;
+                    map.xPos = bomberman.xPos/size - canvas.clientWidth / size / 2 + 1;
+                    //don't go past the left end of the map
+                    if(map.xPos < 0)
+                        map.xPos = 0;
+                    //don't go past the right end of the map
+                    else if (map.xPos+canvas.clientWidth/size > mapX)
+                        map.xPos = mapX - canvas.clientWidth/size;
+
+                    //checks bombermans position
+                    checkPosition();
+                }
 
                 var dir;
                 switch(bomberman.curDir)
@@ -912,6 +1247,7 @@ window.addEventListener("load", function()
                     break;
                 }
 
+
                 //minused bomb and explosions xPos by the camera position (map.xPos*size) to get the actual pos of the object
                 //on the map
                 for(var i = 0; i < bombs.length; i++)
@@ -925,30 +1261,105 @@ window.addEventListener("load", function()
                         for(j = 0; j < explosions.range; j++)
                         {
                             if(explosions[i].left[j])
+                            {
                                 ctx.drawImage(explosion, explosions[i].left[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].left[j].xPos - map.xPos*size, explosions[i].left[j].yPos - map.yPos*size, size, size);
+                                /*if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].left[j].xPos/size - map.xPos][explosions[i].left[j].yPos/size - map.yPos])
+                                    bombermanDeath();
+                                for(let j = 0; j < baroms.length; j++)
+                                {
+                                    if(baroms[j].curGrid == grids[explosions[i].left[j].xPos/size - map.xPos][explosions[i].left[j].yPos/size - map.yPos])
+                                    {
+                                        baroms[j].isActive = false;
+                                        baroms[j].curFrame = 0;
+                                        baroms[j].deathTime = new Date().getTime();
+                                    }
+                                }*/
+                            }
                             if(explosions[i].up[j])
+                            {
                                 ctx.drawImage(explosion, explosions[i].up[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].up[j].xPos - map.xPos*size, explosions[i].up[j].yPos - map.yPos*size, size, size);
+                               /* if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].up[j].xPos/size - map.xPos][explosions[i].up[j].yPos/size - map.yPos])
+                                    bombermanDeath();
+                                for(let j = 0; j < baroms.length; j++)
+                                {
+                                    if(baroms[j].curGrid == grids[explosions[i].up[j].xPos/size - map.xPos][explosions[i].up[j].yPos/size - map.yPos])
+                                    {
+                                        baroms[j].isActive = false;
+                                        baroms[j].curFrame = 0;
+                                        baroms[j].deathTime = new Date().getTime();
+                                    }
+                                }*/
+                            }
                             if(explosions[i].right[j])
+                            {
                                 ctx.drawImage(explosion, explosions[i].right[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].right[j].xPos - map.xPos*size, explosions[i].right[j].yPos - map.yPos*size, size, size);
+                               /* if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].right[j].xPos/size - map.xPos][explosions[i].right[j].yPos/size - map.yPos])
+                                    bombermanDeath();
+                                for(let j = 0; j < baroms.length; j++)
+                                {
+                                    if(baroms[j].curGrid == grids[explosions[i].right[j].xPos/size - map.xPos][explosions[i].right[j].yPos/size - map.yPos])
+                                    {
+                                        baroms[j].isActive = false;
+                                        baroms[j].curFrame = 0;
+                                        baroms[j].deathTime = new Date().getTime();
+                                    }
+                                }*/
+                            }
                             if(explosions[i].down[j])
+                             {
                                 ctx.drawImage(explosion, explosions[i].down[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].down[j].xPos - map.xPos*size, explosions[i].down[j].yPos - map.yPos*size, size, size);
 
+                                /*if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].down[j].xPos/size - map.xPos][explosions[i].down[j].yPos/size - map.yPos])
+                                    bombermanDeath();
+                                for(let j = 0; j < baroms.length; j++)
+                                {
+                                    if(baroms[j].curGrid == grids[explosions[i].down[j].xPos/size - map.xPos][explosions[i].down[j].yPos/size - map.yPos])
+                                    {
+                                        baroms[j].isActive = false;
+                                        baroms[j].curFrame = 0;
+                                        baroms[j].deathTime = new Date().getTime();
+                                    }
+                                }*/
+                             }
                         }
                     }
                         
                 //modified to take maps position in account
-                ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
-                    size, size, bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
+                if(bomberman.isAlive)
+                    ctx.drawImage(bomberman, dir[bomberman.curFrame].x*size, dir[bomberman.curFrame].y*size,
+                        size, size, bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
+                else{
+                    var curTime = new Date().getTime();
+                    if(curTime - deathTime >= 250 )
+                    {
+                        deathTime = curTime;
+                        bomberman.curFrame++;
+                    }
+                    ctx.drawImage(bomberman, bomberman.curFrame * size, 2 * size, size, size,
+                        bomberman.xPos - map.xPos*size, bomberman.yPos - map.yPos*size, size, size);
+                    if(bomberman.curFrame == 5)
+                        reset();
+                }
                 for(i = 0; i < baroms.count; i++){
                     if(baroms[i].isActive)
                         ctx.drawImage(barom, baroms[i].curFrame*size, 0,size,size,baroms[i].xPos - map.xPos*size,baroms[i].yPos - map.yPos*size,size,size);
+                    else if (baroms[i].curFrame <= 4)
+                    {
+                        var curTime = new Date().getTime();
+                        if(curTime - baroms[i].deathTime >= 250)
+                        {
+                            baroms[i].deathTime = curTime;
+                            baroms[i].curFrame++;
+                        }
+                        ctx.drawImage(barom, (baroms[i].curFrame+6)*size, 0,size,size,baroms[i].xPos - map.xPos*size,baroms[i].yPos - map.yPos*size,size,size);
+                    }
                 }
-                console.log(baroms.count);
-                setTimeout(function() {buffer();}, frameRate);
+                //console.log(baroms.count);
+				setTimeout(function() {buffer();}, frameRate);
 
             }
     }
