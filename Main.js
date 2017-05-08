@@ -189,6 +189,7 @@ window.addEventListener("load", function()
                 }
                 baroms[i].xPos = xCord*size;
                 baroms[i].yPos = yCord*size;
+				baroms[i].isDead = false;
                 baroms[i].curGrid = grids[xCord][yCord];
             }
         };
@@ -1264,66 +1265,70 @@ window.addEventListener("load", function()
                             {
                                 ctx.drawImage(explosion, explosions[i].left[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].left[j].xPos - map.xPos*size, explosions[i].left[j].yPos - map.yPos*size, size, size);
-                                /*if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].left[j].xPos/size - map.xPos][explosions[i].left[j].yPos/size - map.yPos])
+                                if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].left[j].xPos/size - map.xPos][explosions[i].left[j].yPos/size - map.yPos])
                                     bombermanDeath();
-                                for(let j = 0; j < baroms.length; j++)
+                                for(let k = 0; k < baroms.length; k++)
                                 {
-                                    if(baroms[j].curGrid == grids[explosions[i].left[j].xPos/size - map.xPos][explosions[i].left[j].yPos/size - map.yPos])
-                                    {
-                                        baroms[j].isActive = false;
-                                        baroms[j].curFrame = 0;
-                                        baroms[j].deathTime = new Date().getTime();
-                                    }
-                                }*/
+									if(baroms[k].isActive)
+										if(baroms[k].xPos - map.xPos == explosions[i].left[j].xPos - map.xPos && baroms[k].yPos == explosions[i].left[j].yPos)
+										{
+											baroms[k].isActive = false;
+											baroms[k].curFrame = 0;
+											baroms[k].deathTime = new Date().getTime();
+										}
+                                }
                             }
                             if(explosions[i].up[j])
                             {
                                 ctx.drawImage(explosion, explosions[i].up[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].up[j].xPos - map.xPos*size, explosions[i].up[j].yPos - map.yPos*size, size, size);
-                               /* if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].up[j].xPos/size - map.xPos][explosions[i].up[j].yPos/size - map.yPos])
+                                if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].up[j].xPos/size - map.xPos][explosions[i].up[j].yPos/size - map.yPos])
                                     bombermanDeath();
-                                for(let j = 0; j < baroms.length; j++)
+                                for(let k = 0; k < baroms.length; k++)
                                 {
-                                    if(baroms[j].curGrid == grids[explosions[i].up[j].xPos/size - map.xPos][explosions[i].up[j].yPos/size - map.yPos])
-                                    {
-                                        baroms[j].isActive = false;
-                                        baroms[j].curFrame = 0;
-                                        baroms[j].deathTime = new Date().getTime();
-                                    }
-                                }*/
+									if(baroms[k].isActive)
+										if(baroms[k].xPos - map.xPos == explosions[i].up[j].xPos - map.xPos && baroms[k].yPos == explosions[i].up[j].yPos)
+										{
+											baroms[k].isActive = false;
+											baroms[k].curFrame = 0;
+											baroms[k].deathTime = new Date().getTime();
+										}
+                                }
                             }
                             if(explosions[i].right[j])
                             {
                                 ctx.drawImage(explosion, explosions[i].right[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].right[j].xPos - map.xPos*size, explosions[i].right[j].yPos - map.yPos*size, size, size);
-                               /* if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].right[j].xPos/size - map.xPos][explosions[i].right[j].yPos/size - map.yPos])
+                                if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].right[j].xPos/size - map.xPos][explosions[i].right[j].yPos/size - map.yPos])
                                     bombermanDeath();
-                                for(let j = 0; j < baroms.length; j++)
+                                for(let k = 0; k < baroms.length; k++)
                                 {
-                                    if(baroms[j].curGrid == grids[explosions[i].right[j].xPos/size - map.xPos][explosions[i].right[j].yPos/size - map.yPos])
-                                    {
-                                        baroms[j].isActive = false;
-                                        baroms[j].curFrame = 0;
-                                        baroms[j].deathTime = new Date().getTime();
-                                    }
-                                }*/
+									if(baroms[k].isActive)
+										if(baroms[k].xPos - map.xPos == explosions[i].right[j].xPos - map.xPos && baroms[k].yPos == explosions[i].right[j].yPos)
+										{
+											baroms[k].isActive = false;
+											baroms[k].curFrame = 0;
+											baroms[k].deathTime = new Date().getTime();
+										}
+                                }
                             }
                             if(explosions[i].down[j])
                              {
                                 ctx.drawImage(explosion, explosions[i].down[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].down[j].xPos - map.xPos*size, explosions[i].down[j].yPos - map.yPos*size, size, size);
 
-                                /*if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].down[j].xPos/size - map.xPos][explosions[i].down[j].yPos/size - map.yPos])
+                                if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].down[j].xPos/size - map.xPos][explosions[i].down[j].yPos/size - map.yPos])
                                     bombermanDeath();
-                                for(let j = 0; j < baroms.length; j++)
+                                for(let k = 0; k < baroms.length; k++)
                                 {
-                                    if(baroms[j].curGrid == grids[explosions[i].down[j].xPos/size - map.xPos][explosions[i].down[j].yPos/size - map.yPos])
-                                    {
-                                        baroms[j].isActive = false;
-                                        baroms[j].curFrame = 0;
-                                        baroms[j].deathTime = new Date().getTime();
-                                    }
-                                }*/
+									if(baroms[k].isActive)
+										if(baroms[k].xPos - map.xPos == explosions[i].down[j].xPos - map.xPos && baroms[k].yPos == explosions[i].down[j].yPos)
+										{
+											baroms[k].isActive = false;
+											baroms[k].curFrame = 0;
+											baroms[k].deathTime = new Date().getTime();
+										}
+                                }
                              }
                         }
                     }
@@ -1355,6 +1360,9 @@ window.addEventListener("load", function()
                             baroms[i].deathTime = curTime;
                             baroms[i].curFrame++;
                         }
+						else
+							baroms[i].isDead = true;
+						if(!baroms[i].isDead)
                         ctx.drawImage(barom, (baroms[i].curFrame+6)*size, 0,size,size,baroms[i].xPos - map.xPos*size,baroms[i].yPos - map.yPos*size,size,size);
                     }
                 }
