@@ -28,7 +28,7 @@ window.addEventListener("load", function()
     var grids = new Array(mapX);
 	
 	var gameOver = false;
-
+    var finishScreen = false;
     //create array of arrays (2d array)
     for (var i = 0; i < mapX; i++) {    
             grids[i] = new Array(mapY);
@@ -318,21 +318,14 @@ window.addEventListener("load", function()
         
             function tickTimer()
             {
-				if(parseInt(timer.textContent) > 0)
+				if(parseInt(timer.textContent) > 0 && !finishScreen)
 				{
 					timer.textContent = parseInt(timer.textContent) - 1;
 					setTimeout(function() { tickTimer();}, 1000);
 				}
-				else
+				else if (bomberman.isAlive)
 				{
-					if(lives.textContent > 0)
-					{
-						lives.textContent = (lives.textContent - 1);
-						timer.textContent = 200;
-						startGame(level);
-					}
-					else
-						bombermanDeath();
+                    bombermanDeath();
 				}
             }
 
@@ -342,12 +335,14 @@ window.addEventListener("load", function()
                 bomberman.isAlive = false;
                 bomberman.curFrame = 0;
                 deathTime = new Date().getTime();
-                if(lives.textContent > 0)
+                if(parseInt(lives.textContent) > 0)
                 {
-                    lives.textContent = (lives.textContent - 1);
+                    lives.textContent = (parseInt(lives.textContent) - 1);
                 }
                 else
-                    console.log("Game Over!");
+                {
+                    gameOver = true;
+                }
             }
 
              //adds the powerup
@@ -480,7 +475,12 @@ window.addEventListener("load", function()
                 //found exit
                 if(bomberman.xPos+size-1 >= targetDoor.xPos && bomberman.xPos-size+1 <= targetDoor.xPos &&
                     bomberman.yPos+size-1 >= targetDoor.yPos && bomberman.yPos-size+1 <= targetDoor.yPos)
-                        startGame(level+1);
+                {
+                    //don't increase level since powerup depends on level 0
+                    //can implement later if needed
+                    //level+=1;
+                    reset();
+                }
 				/*		
 				//hit enemy
                 for(let k = 0; k < baroms.length; k++)
@@ -746,6 +746,11 @@ window.addEventListener("load", function()
 
             function reset()
             {
+                if(gameOver)
+                {
+                    finishScreen = true;
+                    return;
+                }
                 curPowerUp = (level-1)%powerUp.numPowerUps;
                 explosions.range = 1;
                 powerUp.isActive = true;
@@ -832,11 +837,31 @@ window.addEventListener("load", function()
                 targetDoor.xPos = softBlocks[targetDoor.blockIndex].xPos;
                 targetDoor.yPos = softBlocks[targetDoor.blockIndex].yPos;
             }
-            
+            //given two rectangles see if they overlap
+            //used for collision detection
+            //x,y for first object
+            //x1,y1 for second object
+            function overlap(x1,y1,x2,y2)
+            {   
+                if((x1+size) <= x2 || (x2 + size) <= x1 || (y1+size) <= y2 || (y2+size) <= y1 )
+                {
+                    return false;
+                }
+                return true;
+            }
             //sets a buffer to redraw the background
             function buffer()
             {     
                 ctx.clearRect(0,0,canvas.clientWidth, canvas.clientHeight);
+                if(finishScreen)
+                {
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(0,0,canvas.clientWidth, canvas.clientHeight);
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.font = "20px Arial";
+                    ctx.fillText("Game over! Final Score: " + score.textContent, canvas.clientWidth/2-120, canvas.clientHeight/2);
+                    return;
+                }
                 ctx.drawImage(map, map.xPos*size, map.yPos*size, canvas.clientWidth, canvas.clientHeight, 
                     0, 0, canvas.clientWidth, canvas.clientHeight);
 
@@ -1010,7 +1035,13 @@ window.addEventListener("load", function()
                 
                 for(let i = 0; i < baroms.length; i++)
                 {
+                    /*
                     if(baroms[i].curGrid == bomberman.curGrid && bomberman.isAlive && baroms[i].isActive)
+                    {
+                        bombermanDeath();
+                    }
+                    */
+                    if(bomberman.isAlive && baroms[i].isActive && overlap(baroms[i].xPos,baroms[i].yPos,bomberman.xPos,bomberman.yPos))
                     {
                         bombermanDeath();
                     }
@@ -1262,7 +1293,13 @@ window.addEventListener("load", function()
                         ctx.drawImage(explosion, explosions[i].mid.animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                             size, size, explosions[i].mid.xPos - map.xPos*size, explosions[i].mid.yPos - map.yPos*size, size, size);
                         //check for center explosion
+                        /*
                         if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].mid.xPos/size][explosions[i].mid.yPos/size])
+                        {
+                            bombermanDeath();
+                        }
+                        */
+                        if(bomberman.isAlive && overlap(bomberman.xPos,bomberman.yPos,explosions[i].mid.xPos,explosions[i].mid.yPos))
                         {
                             bombermanDeath();
                         }
@@ -1272,14 +1309,20 @@ window.addEventListener("load", function()
                             {
                                 ctx.drawImage(explosion, explosions[i].left[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].left[j].xPos - map.xPos*size, explosions[i].left[j].yPos - map.yPos*size, size, size);
+                                /*
                                 if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].left[j].xPos/size][explosions[i].left[j].yPos/size])
+                                {
+                                    bombermanDeath();
+                                }
+                                */
+                                if(bomberman.isAlive && overlap(bomberman.xPos,bomberman.yPos,explosions[i].left[j].xPos,explosions[i].left[j].yPos))
                                 {
                                     bombermanDeath();
                                 }
                                 for(let k = 0; k < baroms.length; k++)
                                 {
 									if(baroms[k].isActive)
-										if(baroms[k].curGrid == grids[explosions[i].left[j].xPos/size][explosions[i].left[j].yPos/size])
+										if(overlap(baroms[k].xPos,baroms[k].yPos,explosions[i].left[j].xPos,explosions[i].left[j].yPos))
 										{
 											baroms[k].isActive = false;
 											baroms[k].curFrame = 0;
@@ -1291,12 +1334,14 @@ window.addEventListener("load", function()
                             {
                                 ctx.drawImage(explosion, explosions[i].up[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].up[j].xPos - map.xPos*size, explosions[i].up[j].yPos - map.yPos*size, size, size);
-                                if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].up[j].xPos/size][explosions[i].up[j].yPos/size])
+                                //if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].up[j].xPos/size][explosions[i].up[j].yPos/size])
+                                    //bombermanDeath();
+                                if(bomberman.isAlive && overlap(bomberman.xPos,bomberman.yPos,explosions[i].up[j].xPos,explosions[i].up[j].yPos))
                                     bombermanDeath();
                                 for(let k = 0; k < baroms.length; k++)
                                 {
 									if(baroms[k].isActive)
-										if(baroms[k].curGrid == grids[explosions[i].up[j].xPos/size][explosions[i].up[j].yPos/size])
+										if(overlap(baroms[k].xPos,baroms[k].yPos,explosions[i].up[j].xPos,explosions[i].up[j].yPos))
 										{
 											baroms[k].isActive = false;
 											baroms[k].curFrame = 0;
@@ -1308,12 +1353,14 @@ window.addEventListener("load", function()
                             {
                                 ctx.drawImage(explosion, explosions[i].right[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].right[j].xPos - map.xPos*size, explosions[i].right[j].yPos - map.yPos*size, size, size);
-                                if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].right[j].xPos/size][explosions[i].right[j].yPos/size])
+                                //if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].right[j].xPos/size][explosions[i].right[j].yPos/size])
+                                    //bombermanDeath();
+                                if(bomberman.isAlive && overlap(bomberman.xPos,bomberman.yPos, explosions[i].right[j].xPos,explosions[i].right[j].yPos))
                                     bombermanDeath();
                                 for(let k = 0; k < baroms.length; k++)
                                 {
 									if(baroms[k].isActive)
-										if(baroms[k].curGrid == grids[explosions[i].right[j].xPos/size][explosions[i].right[j].yPos/size])
+										if(overlap(baroms[k].xPos,baroms[k].yPos, explosions[i].right[j].xPos,explosions[i].right[j].yPos))
 										{
 											baroms[k].isActive = false;
 											baroms[k].curFrame = 0;
@@ -1326,12 +1373,14 @@ window.addEventListener("load", function()
                                 ctx.drawImage(explosion, explosions[i].down[j].animPos*size, explosions.animationFrames[explosions[i].curFrame]*size, 
                                     size, size, explosions[i].down[j].xPos - map.xPos*size, explosions[i].down[j].yPos - map.yPos*size, size, size);
 
-                                if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].down[j].xPos/size][explosions[i].down[j].yPos/size])
+                                //if(bomberman.isAlive && bomberman.curGrid == grids[explosions[i].down[j].xPos/size][explosions[i].down[j].yPos/size])
+                                    //bombermanDeath();
+                                if(bomberman.isAlive && overlap(bomberman.xPos,bomberman.yPos,explosions[i].down[j].xPos,explosions[i].down[j].yPos))
                                     bombermanDeath();
                                 for(let k = 0; k < baroms.length; k++)
                                 {
 									if(baroms[k].isActive)
-										if(baroms[k].curGrid == grids[explosions[i].down[j].xPos/size][explosions[i].down[j].yPos/size])
+										if(overlap(baroms[k].xPos,baroms[k].yPos,explosions[i].down[j].xPos,explosions[i].down[j].yPos))
 										{
 											baroms[k].isActive = false;
 											baroms[k].curFrame = 0;
@@ -1369,11 +1418,15 @@ window.addEventListener("load", function()
                         //to slow animation changes 250ms between each other
                         if(curTime - baroms[i].deathTime >= 250)
                         {
-                            console.log("animating barom death");
                             baroms[i].deathTime = curTime;
                             baroms[i].curFrame++;
                         }
                         ctx.drawImage(barom, (baroms[i].curFrame+6)*size, 0,size,size,baroms[i].xPos - map.xPos*size,baroms[i].yPos - map.yPos*size,size,size);
+                    }
+                    else if(baroms[i].curFrame == 5)
+                    {
+                        score.textContent = parseInt(score.textContent) + 100;
+                        baroms[i].curFrame++;
                     }
                 }
                 //console.log(baroms.count);
