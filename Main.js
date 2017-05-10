@@ -222,7 +222,7 @@ window.addEventListener("load", function()
         }
             
             //Number of Blocks to placedown onto the map
-            var numBlocks = 50;
+            var numBlocks = 35;
 
             //Call setSoftBlocks function
             setSoftBlocks(numBlocks); 
