@@ -931,7 +931,7 @@ window.addEventListener("load", function()
                             {
                                 baroms[i].yPos --;
                                 //if bomberman left the current grid
-                                if(baroms[i].curGrid.y * size>= baroms[i].yPos + size/2)
+                                if(baroms[i].curGrid.y * size>= baroms[i].yPos)
                                 {
                                     //if the grid moved to is walkable, set curGrid 
                                     if(grids[baroms[i].curGrid.x][baroms[i].curGrid.y-1].walkable)
@@ -984,7 +984,7 @@ window.addEventListener("load", function()
                             {
                                 baroms[i].xPos --;
                                 //if bomberman left the current grid
-                                if(baroms[i].curGrid.x * size >= baroms[i].xPos + size/2)
+                                if(baroms[i].curGrid.x * size >= baroms[i].xPos )
                                 {
                                     //if the grid moved to is walkable, set curGrid 
                                     if(grids[baroms[i].curGrid.x-1][baroms[i].curGrid.y].walkable)
@@ -1009,7 +1009,7 @@ window.addEventListener("load", function()
                             {
                                 baroms[i].xPos ++;
                                 //if bomberman left the current grid
-                                if(baroms[i].curGrid.x * size + size <= baroms[i].xPos + size/2)
+                                if(baroms[i].curGrid.x * size + size <= baroms[i].xPos + size)
                                 {
                                     //if the grid moved to is walkable, set curGrid 
                                     if(grids[baroms[i].curGrid.x+1][baroms[i].curGrid.y].walkable)
